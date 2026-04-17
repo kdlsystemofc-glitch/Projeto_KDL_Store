@@ -1,3 +1,5 @@
+'use client';
+
 export default function Footer() {
   const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || '';
 
