@@ -36,13 +36,14 @@ export async function POST(req: NextRequest) {
   const tenantId = userData?.tenant_id;
 
   // Busca o price_id do plano no Stripe
-  const { data: plan } = await supabase
+  const { data: plan, error: planError } = await supabaseAdmin
     .from('plans')
     .select('stripe_price_id, display_name')
     .eq('name', planId)
     .single();
 
   if (!plan?.stripe_price_id) {
+    console.error("Plano não configurado ou erro:", planError);
     return NextResponse.json({ error: 'Plano não configurado' }, { status: 400 });
   }
 
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
       metadata: { tenant_id: tenantId, user_id: user.id },
     });
     customerId = customer.id;
-    await supabase
+    await supabaseAdmin
       .from('tenants')
       .update({ stripe_customer_id: customerId })
       .eq('id', tenantId);
