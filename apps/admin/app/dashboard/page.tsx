@@ -1,12 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Admin usa service_role para leitura total sem RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Força renderização dinâmica (não executa no build — precisa das env vars)
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const [tenantsData, plansData, recentTenants] = await Promise.all([
     supabaseAdmin.from('tenants').select('id, status'),
     supabaseAdmin.from('plans').select('name, display_name, price_monthly, id'),

@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = 'force-dynamic';
 
 export default async function AssinaturasPage() {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { data: tenants } = await supabaseAdmin
     .from('tenants')
     .select('id, name, slug, status, stripe_subscription_id, stripe_customer_id, created_at, plans(display_name, price_monthly)')
