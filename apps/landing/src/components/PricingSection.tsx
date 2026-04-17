@@ -2,218 +2,112 @@
 
 const PLANS = [
   {
-    id: 'starter',
-    name: 'Starter',
-    price: '49,90',
-    subtitle: 'Para quem está começando',
-    color: '#6C47FF',
-    popular: false,
-    features: [
-      { label: '1 usuário', available: true },
-      { label: 'Até 300 produtos', available: true },
-      { label: 'PDV completo', available: true },
-      { label: 'Descontos e brindes', available: true },
-      { label: 'Controle de estoque', available: true },
-      { label: 'Cadastro de clientes', available: true },
-      { label: 'Documento de venda (PDF)', available: true },
-      { label: 'Garantia digital (PDF)', available: true },
-      { label: 'Relatórios básicos', available: true },
-      { label: 'Fornecedores e pedidos', available: false },
-      { label: 'Ordens de Serviço', available: false },
-      { label: 'Contas a pagar/receber', available: false },
-      { label: 'Fluxo de caixa', available: false },
-      { label: 'Parcelamento', available: false },
-      { label: 'Exportação CSV/PDF', available: false },
-      { label: 'Múltiplos vendedores', available: false },
-      { label: 'Relatórios avançados', available: false },
-      { label: 'DRE Simplificado', available: false },
-      { label: 'Suporte por email', available: true },
-    ],
+    id: 'starter', name: 'Starter', price: '49,90', subtitle: 'Para quem está começando', color: '#6C47FF', popular: false,
+    features: ['1 usuário', 'Até 300 produtos', 'PDV completo', 'Descontos e brindes', 'Controle de estoque', 'Cadastro de clientes', 'Documento de venda (PDF)', 'Garantia digital (PDF)', 'Relatórios básicos', 'Suporte por email'],
+    missing: ['Fornecedores e pedidos', 'Ordens de Serviço', 'Contas a pagar/receber', 'Fluxo de caixa', 'Parcelamento', 'Múltiplos vendedores', 'Relatórios avançados', 'DRE Simplificado'],
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: '69,90',
-    subtitle: 'Para lojas em crescimento',
-    color: '#00D4AA',
-    popular: true,
-    features: [
-      { label: 'Até 3 usuários', available: true },
-      { label: 'Até 1.000 produtos', available: true },
-      { label: 'PDV completo', available: true },
-      { label: 'Descontos e brindes', available: true },
-      { label: 'Controle de estoque', available: true },
-      { label: 'Cadastro de clientes', available: true },
-      { label: 'Documento de venda (PDF)', available: true },
-      { label: 'Garantia digital (PDF)', available: true },
-      { label: 'Relatórios básicos', available: true },
-      { label: 'Fornecedores e pedidos', available: true },
-      { label: 'Ordens de Serviço', available: true },
-      { label: 'Contas a pagar/receber', available: true },
-      { label: 'Fluxo de caixa', available: true },
-      { label: 'Parcelamento', available: true },
-      { label: 'Exportação CSV/PDF', available: true },
-      { label: 'Múltiplos vendedores', available: false },
-      { label: 'Relatórios avançados', available: false },
-      { label: 'DRE Simplificado', available: false },
-      { label: 'Suporte por email', available: true },
-    ],
+    id: 'pro', name: 'Pro', price: '69,90', subtitle: 'Para lojas em crescimento', color: '#6C47FF', popular: true,
+    features: ['Até 3 usuários', 'Até 1.000 produtos', 'PDV completo', 'Descontos e brindes', 'Controle de estoque', 'Cadastro de clientes', 'Documento de venda (PDF)', 'Garantia digital (PDF)', 'Fornecedores e pedidos', 'Ordens de Serviço', 'Contas a pagar/receber', 'Fluxo de caixa', 'Parcelamento', 'Exportação CSV/PDF', 'Suporte por email'],
+    missing: ['Múltiplos vendedores + comissão', 'Relatórios avançados', 'DRE Simplificado'],
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    price: '99,90',
-    subtitle: 'Para operações completas',
-    color: '#FF6B47',
-    popular: false,
-    features: [
-      { label: 'Usuários ilimitados', available: true },
-      { label: 'Produtos ilimitados', available: true },
-      { label: 'PDV completo', available: true },
-      { label: 'Descontos e brindes', available: true },
-      { label: 'Controle de estoque', available: true },
-      { label: 'Cadastro de clientes', available: true },
-      { label: 'Documento de venda (PDF)', available: true },
-      { label: 'Garantia digital (PDF)', available: true },
-      { label: 'Relatórios básicos', available: true },
-      { label: 'Fornecedores e pedidos', available: true },
-      { label: 'Ordens de Serviço', available: true },
-      { label: 'Contas a pagar/receber', available: true },
-      { label: 'Fluxo de caixa', available: true },
-      { label: 'Parcelamento', available: true },
-      { label: 'Exportação CSV/PDF', available: true },
-      { label: 'Múltiplos vendedores + comissão', available: true },
-      { label: 'Relatórios avançados', available: true },
-      { label: 'DRE Simplificado', available: true },
-      { label: 'Suporte prioritário', available: true },
-    ],
+    id: 'premium', name: 'Premium', price: '99,90', subtitle: 'Para operações completas', color: '#FF6B47', popular: false,
+    features: ['Usuários ilimitados', 'Produtos ilimitados', 'PDV completo', 'Descontos e brindes', 'Controle de estoque', 'Cadastro de clientes', 'Documento de venda (PDF)', 'Garantia digital (PDF)', 'Fornecedores e pedidos', 'Ordens de Serviço', 'Contas a pagar/receber', 'Fluxo de caixa', 'Parcelamento', 'Exportação CSV/PDF', 'Múltiplos vendedores + comissão', 'Relatórios avançados', 'DRE Simplificado', 'Suporte prioritário'],
+    missing: [],
   },
 ];
 
 export default function PricingSection() {
-  return (
-    <section id="planos" className="py-32 relative overflow-hidden">
-      {/* Background */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-20"
-        style={{
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(108,71,255,0.5) 0%, transparent 70%)',
-        }}
-      />
+  const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || '';
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+  return (
+    <section id="planos" style={{ padding: '6rem 0', background: 'white', position: 'relative' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(to right, transparent, rgba(108,71,255,0.2), transparent)' }} />
+
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem' }}>
         {/* Header */}
-        <div className="text-center mb-20">
-          <div className="section-label justify-center mx-auto w-fit">
+        <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
+          <div className="section-label" style={{ display: 'inline-flex' }}>
             <span>💎</span> Planos e preços
           </div>
-          <h2 className="text-4xl md:text-5xl font-black mb-6">
-            Simples,{' '}
-            <span className="text-gradient">transparente</span>
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 900, marginBottom: '1rem', color: '#16113A' }}>
+            Simples, <span className="text-gradient">transparente</span>
           </h2>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto">
+          <p style={{ fontSize: '1.05rem', color: '#6B6A8A', maxWidth: 500, margin: '0 auto', lineHeight: 1.65 }}>
             Planos mensais, sem fidelidade e sem letras miúdas. Cancele quando quiser.
-            Sem teste grátis — cobramos porque entregamos valor desde o primeiro dia.
           </p>
         </div>
 
-        {/* Plans grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {PLANS.map((plan, i) => (
-            <div
-              key={plan.id}
-              className={`rounded-2xl p-8 relative overflow-hidden transition-all duration-300 hover:-translate-y-2 ${
-                plan.popular
-                  ? 'border-2'
-                  : 'glass'
-              }`}
-              style={
-                plan.popular
-                  ? {
-                      background: 'rgba(0,212,170,0.06)',
-                      borderColor: plan.color,
-                      boxShadow: `0 30px 80px ${plan.color}25`,
-                    }
-                  : undefined
-              }
+        {/* Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+          {PLANS.map((plan) => (
+            <div key={plan.id} style={{
+              background: plan.popular ? 'linear-gradient(145deg, #6C47FF, #4F2FE8)' : 'white',
+              border: plan.popular ? 'none' : '1.5px solid rgba(22,17,58,0.08)',
+              borderRadius: 22,
+              padding: '2.25rem',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: plan.popular ? '0 20px 60px rgba(108,71,255,0.3)' : '0 2px 16px rgba(22,17,58,0.05)',
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+            }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
             >
               {/* Popular badge */}
               {plan.popular && (
-                <div
-                  className="absolute top-0 right-6 px-4 py-1.5 rounded-b-xl text-xs font-bold text-white"
-                  style={{ background: plan.color }}
-                >
+                <div style={{ position: 'absolute', top: 0, right: '1.5rem', background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '0.7rem', fontWeight: 800, padding: '0.35rem 0.875rem', borderRadius: '0 0 10px 10px', letterSpacing: '0.08em' }}>
                   ⭐ MAIS POPULAR
                 </div>
               )}
+              {/* Glow for non-popular */}
+              {!plan.popular && <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: plan.color, opacity: 0.06, filter: 'blur(30px)' }} />}
 
-              {/* Glow */}
-              <div
-                className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-20 pointer-events-none"
-                style={{ background: plan.color, filter: 'blur(40px)' }}
-              />
-
-              {/* Plan header */}
-              <div className="mb-8">
-                <div
-                  className="w-10 h-1.5 rounded-full mb-4"
-                  style={{ background: plan.color }}
-                />
-                <div
-                  className="text-sm font-bold mb-1 uppercase tracking-wider"
-                  style={{ color: plan.color }}
-                >
-                  {plan.name}
+              {/* Plan name */}
+              <div style={{ marginBottom: '1.75rem' }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: plan.popular ? 'rgba(255,255,255,0.5)' : plan.color, marginBottom: '1rem' }} />
+                <p style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: plan.popular ? 'rgba(255,255,255,0.7)' : plan.color, marginBottom: '0.5rem' }}>{plan.name}</p>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: '0.4rem' }}>
+                  <span style={{ fontSize: '1rem', color: plan.popular ? 'rgba(255,255,255,0.6)' : '#A8A7C0', marginBottom: 4 }}>R$</span>
+                  <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: '3.25rem', fontWeight: 900, lineHeight: 1, color: plan.popular ? 'white' : '#16113A' }}>{plan.price}</span>
+                  <span style={{ color: plan.popular ? 'rgba(255,255,255,0.6)' : '#A8A7C0', marginBottom: 4, fontSize: '0.9rem' }}>/mês</span>
                 </div>
-                <div className="flex items-end gap-1 mb-1">
-                  <span className="text-white/40 text-lg">R$</span>
-                  <span
-                    className="text-5xl font-black"
-                    style={{ fontFamily: 'Outfit, sans-serif', color: plan.popular ? plan.color : '#F4F4FF' }}
-                  >
-                    {plan.price}
-                  </span>
-                  <span className="text-white/40 mb-1">/mês</span>
-                </div>
-                <p className="text-sm text-white/40">{plan.subtitle}</p>
+                <p style={{ fontSize: '0.85rem', color: plan.popular ? 'rgba(255,255,255,0.6)' : '#A8A7C0' }}>{plan.subtitle}</p>
               </div>
 
-              <a
-                href={`${process.env.NEXT_PUBLIC_STORE_URL || ''}/cadastro?plano=${plan.id}`}
-                id={`btn-plan-${plan.id}`}
-                className="block text-center py-3.5 rounded-xl font-bold text-sm mb-8 transition-all duration-300 hover:opacity-90 hover:scale-105"
-                style={
-                  plan.popular
-                    ? { background: plan.color, color: 'white' }
-                    : {
-                        background: `${plan.color}15`,
-                        color: plan.color,
-                        border: `1px solid ${plan.color}40`,
-                      }
-                }
-              >
+              {/* CTA */}
+              <a href={`${storeUrl}/cadastro?plano=${plan.id}`} id={`btn-plan-${plan.id}`} style={{
+                display: 'block', textAlign: 'center',
+                padding: '0.875rem',
+                borderRadius: 12,
+                fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '0.95rem',
+                textDecoration: 'none',
+                marginBottom: '1.75rem',
+                transition: 'all 0.2s ease',
+                background: plan.popular ? 'white' : plan.color,
+                color: plan.popular ? '#6C47FF' : 'white',
+                boxShadow: plan.popular ? '0 4px 20px rgba(0,0,0,0.1)' : `0 4px 16px ${plan.color}40`,
+              }}>
                 Assinar {plan.name}
               </a>
 
               {/* Features */}
-              <div className="space-y-3">
-                {plan.features.filter(f => f.available).map((feature, fi) => (
-                  <div key={fi} className="flex items-center gap-3">
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
-                      style={{ background: `${plan.color}20`, color: plan.color }}
-                    >
-                      ✓
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                {plan.features.map((f, fi) => (
+                  <div key={fi} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: plan.popular ? 'rgba(255,255,255,0.15)' : `${plan.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={plan.popular ? 'white' : plan.color} strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
                     </div>
-                    <span className="text-sm text-white/70">{feature.label}</span>
+                    <span style={{ fontSize: '0.875rem', color: plan.popular ? 'rgba(255,255,255,0.85)' : '#16113A' }}>{f}</span>
                   </div>
                 ))}
-                {plan.features.filter(f => !f.available).map((feature, fi) => (
-                  <div key={fi} className="flex items-center gap-3 opacity-30">
-                    <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-xs bg-white/10 text-white/30">
-                      ✗
+                {plan.missing.map((f, fi) => (
+                  <div key={fi} style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: 0.3 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(22,17,58,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#6B6A8A" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>
                     </div>
-                    <span className="text-sm text-white/40 line-through">{feature.label}</span>
+                    <span style={{ fontSize: '0.875rem', color: '#6B6A8A', textDecoration: 'line-through' }}>{f}</span>
                   </div>
                 ))}
               </div>
@@ -222,13 +116,11 @@ export default function PricingSection() {
         </div>
 
         {/* Notes */}
-        <div className="mt-12 text-center">
-          <div className="inline-flex items-center gap-3 text-sm text-white/35">
-            <span>💳 Pagamento via cartão de crédito</span>
-            <span className="w-1 h-1 rounded-full bg-white/20" />
-            <span>🔒 Ambiente seguro</span>
-            <span className="w-1 h-1 rounded-full bg-white/20" />
-            <span>❌ Cancele quando quiser</span>
+        <div style={{ marginTop: '3rem', textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {['💳 Cartão de crédito', '🔒 Pagamento seguro', '❌ Cancele quando quiser'].map(n => (
+              <span key={n} style={{ fontSize: '0.85rem', color: '#A8A7C0' }}>{n}</span>
+            ))}
           </div>
         </div>
       </div>

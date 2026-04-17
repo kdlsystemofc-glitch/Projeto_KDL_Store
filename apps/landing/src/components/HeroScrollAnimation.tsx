@@ -1,268 +1,214 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-export default function HeroSection() {
-  const imgRef = useRef<HTMLDivElement>(null);
+const TOTAL_FRAMES = 40;
+const SCROLL_PER_FRAME = 80; // px de scroll por frame
+const TOTAL_SCROLL = TOTAL_FRAMES * SCROLL_PER_FRAME;
+
+function getFramePath(i: number) {
+  return `/frames/ezgif-frame-${String(i + 1).padStart(3, '0')}.png`;
+}
+
+export default function HeroScrollAnimation() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(Array(TOTAL_FRAMES).fill(null));
+  const currentFrameRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const [viewportH, setViewportH] = useState(900);
 
   useEffect(() => {
-    const el = imgRef.current;
-    if (!el) return;
+    setViewportH(window.innerHeight);
+    const onResize = () => setViewportH(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      // Parallax sutil: image move up slightly
-      el.style.transform = `translateY(${scrollY * 0.12}px) scale(${1 + scrollY * 0.00015})`;
+  function drawFrame(idx: number) {
+    const canvas = canvasRef.current;
+    const img = imagesRef.current[idx];
+    if (!canvas || !img) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    // Cover mode — preenche o canvas mantendo proporção
+    const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+    const x = (canvas.width - img.width * scale) / 2;
+    const y = (canvas.height - img.height * scale) / 2;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+  }
+
+  // Carrega frame 0 imediatamente, depois o restante em background
+  useEffect(() => {
+    const first = new Image();
+    first.src = getFramePath(0);
+    first.onload = () => {
+      imagesRef.current[0] = first;
+      drawFrame(0);
+      // Depois carrega os demais silenciosamente
+      for (let i = 1; i < TOTAL_FRAMES; i++) {
+        const img = new Image();
+        img.src = getFramePath(i);
+        img.onload = () => { imagesRef.current[i] = img; };
+        img.onerror = () => { imagesRef.current[i] = first; }; // fallback p/ frame 0
+      }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+  // Resize canvas ao redimensionar janela
+  useEffect(() => {
+    function resize() {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      drawFrame(currentFrameRef.current);
+    }
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Scroll → frame
+  useEffect(() => {
+    function onScroll() {
+      const container = containerRef.current;
+      if (!container) return;
+      const scrolled = -container.getBoundingClientRect().top;
+      const progress = Math.max(0, Math.min(1, scrolled / TOTAL_SCROLL));
+      const target = Math.min(TOTAL_FRAMES - 1, Math.floor(progress * TOTAL_FRAMES));
+      if (target !== currentFrameRef.current) {
+        currentFrameRef.current = target;
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame(() => drawFrame(target));
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <section
-      style={{
-        minHeight: '100vh',
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        overflow: 'hidden',
-        background: 'var(--kdl-bg)',
-      }}
+    <div
+      ref={containerRef}
+      style={{ height: `${TOTAL_SCROLL + viewportH}px`, position: 'relative' }}
     >
-      {/* Background glows */}
-      <div
-        style={{
+      {/* Sticky viewport */}
+      <div style={{ position: 'sticky', top: 0, width: '100%', height: '100vh', overflow: 'hidden' }}>
+
+        {/* Canvas — cena 3D animada pelo scroll */}
+        <canvas
+          ref={canvasRef}
+          style={{ display: 'block', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+        />
+
+        {/* Gradiente sutil para legibilidade do texto (esquerda) */}
+        <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 80% 60% at 70% 50%, rgba(108,71,255,0.18) 0%, transparent 65%), radial-gradient(ellipse 60% 60% at 30% 80%, rgba(0,212,170,0.10) 0%, transparent 60%)',
-        }}
-      />
+          background: 'linear-gradient(to right, rgba(245,244,255,0.88) 0%, rgba(245,244,255,0.55) 45%, transparent 75%)',
+        }} />
 
-      {/* Grid pattern */}
-      <div
-        className="grid-pattern"
-        style={{ position: 'absolute', inset: 0, opacity: 0.4, pointerEvents: 'none' }}
-      />
+        {/* Gradiente suave no topo para a Navbar */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 120, pointerEvents: 'none',
+          background: 'linear-gradient(to bottom, rgba(245,244,255,0.6) 0%, transparent 100%)',
+        }} />
 
-      {/* Main content */}
-      <div
-        style={{
-          maxWidth: 1280, margin: '0 auto', padding: '0 2rem',
-          display: 'grid', gridTemplateColumns: '1fr 1fr',
-          alignItems: 'center', gap: '4rem', width: '100%',
-          paddingTop: '5rem',
-        }}
-        className="hero-grid"
-      >
-        {/* Left — copy */}
-        <div style={{ position: 'relative', zIndex: 2 }} className="animate-fade-in-up">
-          {/* Label */}
-          <div className="section-label" style={{ marginBottom: '1.5rem' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D4AA', display: 'inline-block' }} />
-            Sistema completo para lojistas
-          </div>
+        {/* Hero content — esquerda inferior, igual ao etail.me */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'flex-end',
+          maxWidth: 1280, margin: '0 auto', left: 0, right: 0,
+          padding: '0 2rem 5rem',
+        }}>
+          <div style={{ maxWidth: 560 }} className="animate-fade-in-up">
+            {/* Label */}
+            <div className="section-label" style={{ marginBottom: '1.25rem' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00C6A2', display: 'inline-block' }} />
+              Sistema completo para lojistas
+            </div>
 
-          <h1
-            style={{
+            {/* Headline */}
+            <h1 style={{
               fontFamily: 'Outfit, sans-serif',
-              fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+              fontSize: 'clamp(3rem, 5.5vw, 5rem)',
               fontWeight: 900,
-              lineHeight: 1.05,
-              marginBottom: '1.5rem',
-              color: '#F4F4FF',
-            }}
-          >
-            Sua loja,{' '}
-            <span className="text-gradient">do jeito<br />certo</span>
-          </h1>
+              lineHeight: 1.0,
+              color: '#16113A',
+              marginBottom: '1.25rem',
+              letterSpacing: '-0.02em',
+            }}>
+              Sua loja,{' '}
+              <span className="text-gradient">do jeito<br />certo</span>
+            </h1>
 
-          <p
-            style={{
-              fontSize: '1.125rem',
-              lineHeight: 1.75,
-              color: 'rgba(244,244,255,0.6)',
-              maxWidth: 480,
-              marginBottom: '2.5rem',
-            }}
-          >
-            Estoque, PDV, garantias digitais, clientes, financeiro e muito mais — tudo integrado para pequenas lojas que querem crescer com profissionalismo.
-          </p>
-
-          {/* CTAs */}
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
-            <a href="#planos" className="btn-primary" id="hero-cta-primary">
-              Começar agora
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </a>
-            <a href="#funcionalidades" className="btn-secondary" id="hero-cta-secondary">
-              Ver funcionalidades
-            </a>
-          </div>
-
-          {/* Social proof */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', marginRight: 4 }}>
-              {['#6C47FF', '#00D4AA', '#FF6B47', '#FFD447'].map((c, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: 34, height: 34, borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${c}cc, ${c})`,
-                    border: '2px solid #0A0A0F',
-                    marginLeft: i === 0 ? 0 : -10,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: '#fff',
-                  }}
-                >
-                  {['L', 'V', 'M', 'A'][i]}
-                </div>
-              ))}
-            </div>
-            <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)' }}>
-              <span style={{ color: '#F4F4FF', fontWeight: 700 }}>+500 lojistas</span> já usam o KDL Store
+            <p style={{ fontSize: '1.1rem', color: '#6B6A8A', lineHeight: 1.65, maxWidth: 440, marginBottom: '2rem' }}>
+              PDV, estoque, garantias digitais, clientes, financeiro e muito mais — tudo integrado para o pequeno comércio.
             </p>
-          </div>
 
-          {/* Stats row */}
-          <div
-            style={{
-              display: 'flex', gap: '2rem', marginTop: '3rem',
-              paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.07)',
-            }}
-          >
-            {[
-              { value: '100%', label: 'na nuvem' },
-              { value: '< 2min', label: 'para configurar' },
-              { value: '24/7', label: 'disponível' },
-            ].map((s) => (
-              <div key={s.label}>
-                <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem', fontWeight: 800, color: '#F4F4FF' }}>{s.value}</p>
-                <p style={{ fontSize: '0.75rem', color: 'rgba(244,244,255,0.4)', marginTop: 2 }}>{s.label}</p>
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+              <a href="#planos" className="btn-primary" id="hero-cta-primary">
+                Começar agora
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </a>
+              <a href="#funcionalidades" className="btn-secondary" id="hero-cta-secondary">
+                Ver funcionalidades
+              </a>
+            </div>
+
+            {/* Social proof */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex' }}>
+                {['#6C47FF', '#00C6A2', '#FF6B47', '#FFD447'].map((c, i) => (
+                  <div key={i} style={{
+                    width: 30, height: 30, borderRadius: '50%',
+                    background: c, border: '2px solid #F5F4FF',
+                    marginLeft: i === 0 ? 0 : -8,
+                    fontSize: 11, fontWeight: 800, color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {['L', 'V', 'M', 'A'][i]}
+                  </div>
+                ))}
               </div>
-            ))}
+              <p style={{ fontSize: '0.85rem', color: '#6B6A8A' }}>
+                <strong style={{ color: '#16113A' }}>+500 lojistas</strong> já usam o KDL Store
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Right — 3D illustration */}
-        <div
-          style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          {/* Glow behind image */}
-          <div
-            style={{
-              position: 'absolute', width: '80%', height: '80%',
-              borderRadius: '50%',
-              background: 'radial-gradient(ellipse, rgba(108,71,255,0.25) 0%, transparent 70%)',
-              filter: 'blur(40px)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            ref={imgRef}
-            style={{
-              position: 'relative', zIndex: 1,
-              width: '100%', maxWidth: 580,
-              willChange: 'transform',
-              animation: 'float 6s ease-in-out infinite',
-            }}
-          >
-            {/* Floating badges */}
-            <div
-              style={{
-                position: 'absolute', top: '10%', left: '-5%',
-                background: 'rgba(10,10,15,0.85)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(108,71,255,0.3)',
-                borderRadius: 14, padding: '0.75rem 1.25rem',
-                zIndex: 10, animation: 'float 4s ease-in-out infinite',
-                animationDelay: '0.5s',
-              }}
-            >
-              <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>Vendas hoje</p>
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#00D4AA' }}>R$ 3.847,00</p>
-            </div>
-
-            <div
-              style={{
-                position: 'absolute', bottom: '15%', right: '-5%',
-                background: 'rgba(10,10,15,0.85)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(0,212,170,0.3)',
-                borderRadius: 14, padding: '0.75rem 1.25rem',
-                zIndex: 10, animation: 'float 5s ease-in-out infinite',
-                animationDelay: '1s',
-              }}
-            >
-              <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>Produtos ativos</p>
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#6C47FF' }}>247 itens</p>
-            </div>
-
-            <div
-              style={{
-                position: 'absolute', top: '45%', right: '-8%',
-                background: 'rgba(10,10,15,0.85)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,107,71,0.3)',
-                borderRadius: 14, padding: '0.6rem 1rem',
-                zIndex: 10, animation: 'float 4.5s ease-in-out infinite',
-                animationDelay: '1.5s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
-                <p style={{ fontSize: '0.75rem', color: '#10B981', fontWeight: 700 }}>Garantia emitida</p>
-              </div>
-            </div>
-
-            <img
-              src="/hero-3d.png"
-              alt="KDL Store — sistema de gestão para lojistas"
-              style={{ width: '100%', height: 'auto', display: 'block', position: 'relative', zIndex: 2 }}
-              loading="eager"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div
-        style={{
-          position: 'absolute', bottom: '2rem', left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-        }}
-      >
-        <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}>
-          Role para ver mais
-        </p>
-        <div
-          style={{
-            width: 20, height: 32, borderRadius: 10,
-            border: '1.5px solid rgba(255,255,255,0.15)',
-            display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 4,
-          }}
-        >
-          <div
-            style={{
-              width: 4, height: 8, borderRadius: 2,
-              background: 'rgba(255,255,255,0.35)',
+        {/* Scroll indicator */}
+        <div style={{
+          position: 'absolute', bottom: '1.75rem', right: '2rem',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+        }}>
+          <p style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(22,17,58,0.3)', writingMode: 'vertical-rl' }}>
+            role para explorar
+          </p>
+          <div style={{
+            width: 18, height: 28, borderRadius: 9,
+            border: '1.5px solid rgba(22,17,58,0.18)',
+            display: 'flex', justifyContent: 'center', paddingTop: 4,
+          }}>
+            <div style={{
+              width: 3, height: 7, borderRadius: 2,
+              background: 'rgba(22,17,58,0.35)',
               animation: 'scrollDot 1.8s ease-in-out infinite',
-            }}
-          />
+            }} />
+          </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .hero-grid { grid-template-columns: 1fr !important; padding-top: 6rem !important; }
-        }
-        @keyframes scrollDot {
-          0% { transform: translateY(0); opacity: 1; }
-          100% { transform: translateY(12px); opacity: 0; }
-        }
-      `}</style>
-    </section>
+    </div>
   );
 }

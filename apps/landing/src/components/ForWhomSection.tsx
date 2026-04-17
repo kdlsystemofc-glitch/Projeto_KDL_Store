@@ -12,53 +12,38 @@ const STORE_TYPES = [
   { icon: '🐾', label: 'Pet Shop', desc: 'Agendamento de serviços, produtos veterinários' },
   { icon: '📚', label: 'Papelaria e Livraria', desc: 'Catálogo extenso, ISBN, fornecedores múltiplos' },
   { icon: '🚲', label: 'Esportes e Lazer', desc: 'Estoque por tamanho, marcas, kits' },
-  { icon: '🏪', label: 'Comércio Geral', desc: 'Qualquer tipo de produto, adaptável a qualquer loja' },
+  { icon: '🏪', label: 'Comércio Geral', desc: 'Qualquer tipo de produto, adaptável' },
 ];
 
 export default function ForWhomSection() {
   return (
-    <section id="paraquem" style={{ padding: '6rem 0', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 70% 60% at 80% 50%, rgba(0,212,170,0.08) 0%, transparent 60%)' }} />
-
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
-          <div className="section-label" style={{ display: 'inline-flex', marginBottom: '1.5rem' }}>
+    <section id="paraquem" style={{ padding: '6rem 0', background: 'white' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
+          <div className="section-label" style={{ display: 'inline-flex' }}>
             <span>🏪</span> Para quem é o KDL Store?
           </div>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', color: '#F4F4FF' }}>
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 900, marginBottom: '1rem', color: '#16113A' }}>
             Funciona para{' '}
             <span className="text-gradient">qualquer loja</span>
           </h2>
-          <p style={{ fontSize: '1.1rem', color: 'rgba(244,244,255,0.5)', maxWidth: 540, margin: '0 auto' }}>
-            O KDL Store foi pensado para ser flexível. Seja loja de som, moda ou utilidades — o sistema se adapta ao seu negócio.
+          <p style={{ fontSize: '1.05rem', color: '#6B6A8A', maxWidth: 520, margin: '0 auto', lineHeight: 1.65 }}>
+            Seja loja de som, moda ou utilidades — o sistema se adapta ao seu negócio.
           </p>
         </div>
 
-        {/* Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
           {STORE_TYPES.map((type, i) => (
-            <div
-              key={i}
-              className="card-hover"
-              style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: 14,
-                padding: '1.5rem',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: 30, marginBottom: '0.75rem' }}>{type.icon}</div>
-              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.4rem', color: '#F4F4FF' }}>{type.label}</h3>
-              <p style={{ fontSize: '0.78rem', color: 'rgba(244,244,255,0.35)', lineHeight: 1.5 }}>{type.desc}</p>
+            <div key={i} className="kdl-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+              <div style={{ fontSize: 28, marginBottom: '0.75rem' }}>{type.icon}</div>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.9rem', fontWeight: 700, color: '#16113A', marginBottom: '0.35rem' }}>{type.label}</h3>
+              <p style={{ fontSize: '0.78rem', color: '#A8A7C0', lineHeight: 1.5 }}>{type.desc}</p>
             </div>
           ))}
         </div>
 
-        {/* CTA */}
-        <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-          <p style={{ color: 'rgba(244,244,255,0.4)', marginBottom: '1.25rem', fontSize: '0.9rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '3.5rem' }}>
+          <p style={{ color: '#A8A7C0', marginBottom: '1.25rem', fontSize: '0.9rem' }}>
             Não encontrou o seu segmento? O KDL Store funciona para qualquer tipo de comércio varejista.
           </p>
           <a href="#planos" className="btn-primary" id="forwhom-cta">
