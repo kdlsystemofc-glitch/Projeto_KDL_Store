@@ -57,7 +57,7 @@ export default function Navbar() {
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3" id="nav-cta">
           <a
-            href="https://app.kdlstore.com.br/login"
+            href={`${process.env.NEXT_PUBLIC_STORE_URL || ''}/login`}
             className="text-sm font-medium text-white/55 hover:text-white transition-colors"
           >
             Entrar
@@ -102,7 +102,7 @@ export default function Navbar() {
             </a>
           ))}
           <div className="flex flex-col gap-3 mt-2">
-            <a href="https://app.kdlstore.com.br/login" className="btn-secondary text-center">
+            <a href={`${process.env.NEXT_PUBLIC_STORE_URL || ''}/login`} className="btn-secondary text-center">
               Entrar
             </a>
             <a href="#planos" className="btn-primary justify-center" onClick={() => setMobileOpen(false)}>

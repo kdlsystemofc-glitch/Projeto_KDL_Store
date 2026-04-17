@@ -178,9 +178,8 @@ export default function PricingSection() {
                 <p className="text-sm text-white/40">{plan.subtitle}</p>
               </div>
 
-              {/* CTA */}
               <a
-                href={`https://app.kdlstore.com.br/cadastro?plano=${plan.id}`}
+                href={`${process.env.NEXT_PUBLIC_STORE_URL || ''}/cadastro?plano=${plan.id}`}
                 id={`btn-plan-${plan.id}`}
                 className="block text-center py-3.5 rounded-xl font-bold text-sm mb-8 transition-all duration-300 hover:opacity-90 hover:scale-105"
                 style={
