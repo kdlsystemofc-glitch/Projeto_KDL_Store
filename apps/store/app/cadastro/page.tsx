@@ -71,10 +71,25 @@ function CadastroForm() {
       return;
     }
 
-    // 2. Redireciona para Stripe Checkout (placeholder URL até configurar)
-    // Em produção: criar sessão Stripe via API route
-    const checkoutUrl = `/api/checkout?plan=${planId}&user=${data.user.id}`;
-    router.push(checkoutUrl);
+    // 2. Chama API para criar sessão Stripe Checkout
+    try {
+      const checkoutRes = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId }),
+      });
+      const checkoutData = await checkoutRes.json();
+
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url; // Redireciona para o Stripe
+      } else {
+        setError(checkoutData.error || 'Erro ao iniciar pagamento.');
+        setLoading(false);
+      }
+    } catch (err) {
+      setError('Falha na comunicação com servidor de pagamento.');
+      setLoading(false);
+    }
   }
 
   return (
