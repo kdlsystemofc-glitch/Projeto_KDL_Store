@@ -76,7 +76,7 @@ function CadastroForm() {
       const checkoutRes = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, userId: data.user.id }),
       });
       const checkoutData = await checkoutRes.json();
 

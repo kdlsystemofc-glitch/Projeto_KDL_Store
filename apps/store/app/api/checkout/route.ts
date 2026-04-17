@@ -1,21 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!); // dentro da função!
-  const supabase = await createClient();
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!); 
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { planId, userId } = await req.json();
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) {
+    return NextResponse.json({ error: 'Missing user' }, { status: 401 });
   }
 
-  const { planId } = await req.json();
+  // Usa Service Role para garantir leitura caso o cookie no client ainda não tenha propagado
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  // Busca o email do usuário real
+  const { data: authData } = await supabaseAdmin.auth.admin.getUserById(userId);
+  const user = authData?.user;
+
+  if (!user) {
+    return NextResponse.json({ error: 'User not found in auth' }, { status: 401 });
+  }
 
   // Busca dados do tenant
-  const { data: userData } = await supabase
+  const { data: userData } = await supabaseAdmin
     .from('users')
     .select('tenant_id, tenants(name, stripe_customer_id)')
     .eq('id', user.id)
