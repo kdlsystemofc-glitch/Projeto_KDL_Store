@@ -330,15 +330,29 @@ returns uuid as $$
   select tenant_id from users where id = auth.uid()
 $$ language sql stable security definer;
 
--- Políticas genéricas: usuário só vê dados do seu tenant
-do $$
-declare
-  tname text;
-begin
-  foreach tname in array array['categories','products','stock_movements','customers','suppliers','supplier_orders','sales','sale_items','warranties','service_orders','accounts_receivable','accounts_payable','cash_transactions'] loop
-    execute format('create policy "%s_tenant_policy" on %s for all using (tenant_id = auth_tenant_id())', tname, tname);
-  end loop;
-end $$;
+-- Políticas individuais por tabela (mais explícito e sem erros)
+
+-- Tabelas com tenant_id direto
+create policy "categories_tenant_policy"       on categories       for all using (tenant_id = auth_tenant_id());
+create policy "products_tenant_policy"         on products         for all using (tenant_id = auth_tenant_id());
+create policy "stock_movements_tenant_policy"  on stock_movements  for all using (tenant_id = auth_tenant_id());
+create policy "customers_tenant_policy"        on customers        for all using (tenant_id = auth_tenant_id());
+create policy "suppliers_tenant_policy"        on suppliers        for all using (tenant_id = auth_tenant_id());
+create policy "supplier_orders_tenant_policy"  on supplier_orders  for all using (tenant_id = auth_tenant_id());
+create policy "sales_tenant_policy"            on sales            for all using (tenant_id = auth_tenant_id());
+create policy "warranties_tenant_policy"       on warranties       for all using (tenant_id = auth_tenant_id());
+create policy "service_orders_tenant_policy"   on service_orders   for all using (tenant_id = auth_tenant_id());
+create policy "accounts_receivable_policy"     on accounts_receivable for all using (tenant_id = auth_tenant_id());
+create policy "accounts_payable_policy"        on accounts_payable    for all using (tenant_id = auth_tenant_id());
+create policy "cash_transactions_policy"       on cash_transactions   for all using (tenant_id = auth_tenant_id());
+
+-- sale_items NÃO tem tenant_id — acessa via tabela sales (join)
+create policy "sale_items_tenant_policy" on sale_items
+  for all using (
+    sale_id in (
+      select id from sales where tenant_id = auth_tenant_id()
+    )
+  );
 
 -- Tenants: usuário vê apenas o seu
 create policy "tenants_own_policy" on tenants for all using (id = auth_tenant_id());
@@ -346,7 +360,7 @@ create policy "tenants_own_policy" on tenants for all using (id = auth_tenant_id
 -- Users: usuário vê apenas os do seu tenant
 create policy "users_tenant_policy" on users for all using (tenant_id = auth_tenant_id());
 
--- Planos: todos podem ler
+-- Planos: todos podem ler (necessário para a tela de cadastro)
 alter table plans enable row level security;
 create policy "plans_public_read" on plans for select using (true);
 
