@@ -1,532 +1,425 @@
 # KDL Store — System Map
 
 > **Documento vivo.** Atualizado a cada mudança significativa no código.
-> Última atualização: 2025-04-17 | Fase 2 — Landing Page
+> Última atualização: 2025-04-17 | Fase 4 Completa — Todos os módulos
 
 ---
 
 ## Índice
 
-1. [Visão Geral da Arquitetura](#1-visão-geral-da-arquitetura)
-2. [Módulo: Landing Page](#2-módulo-landing-page)
-3. [Módulo: App da Loja](#3-módulo-app-da-loja) *(Em desenvolvimento)*
-4. [Módulo: Portal Admin](#4-módulo-portal-admin) *(Em desenvolvimento)*
+1. [Visão Geral da Arquitetura](#1-visão-geral)
+2. [Landing Page](#2-landing-page-appslanding)
+3. [App da Loja](#3-app-da-loja-appsstore)
+4. [Portal Admin](#4-portal-admin-appsadmin)
 5. [Banco de Dados](#5-banco-de-dados)
-6. [Fluxos de Negócio](#6-fluxos-de-negócio)
-7. [Planos e Limites](#7-planos-e-limites)
-8. [Variáveis de Ambiente](#8-variáveis-de-ambiente)
+6. [Integração Stripe](#6-integração-stripe)
+7. [Fluxos de Negócio](#7-fluxos-de-negócio)
+8. [Planos e Limites](#8-planos-e-limites)
+9. [Variáveis de Ambiente](#9-variáveis-de-ambiente)
+10. [Próximos Passos](#10-próximos-passos)
 
 ---
 
-## 1. Visão Geral da Arquitetura
+## 1. Visão Geral
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    KDL Store Monorepo                     │
-│                   (Turborepo + pnpm)                      │
-├──────────────┬───────────────────┬──────────────────────┤
-│  apps/landing│    apps/store     │     apps/admin        │
-│  Next.js 16  │    Next.js 16     │     Next.js 16        │
-│  Port 3000   │    Port 3001      │     Port 3002         │
-│  kdlstore.   │  app.kdlstore.   │  admin.kdlstore.      │
-│  com.br      │    com.br         │      com.br           │
-├──────────────┴───────────────────┴──────────────────────┤
-│                      Supabase                             │
-│        PostgreSQL │ Auth │ Storage │ RLS                  │
-├──────────────────────────────────────────────────────────┤
-│                       Stripe                              │
-│             Pagamentos │ Webhooks │ Assinaturas           │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     KDL Store Monorepo                        │
+│                   Turborepo + pnpm 9.x                        │
+├──────────────┬──────────────────────┬────────────────────────┤
+│ apps/landing │     apps/store        │      apps/admin         │
+│ Next.js 16   │     Next.js 16        │      Next.js 16         │
+│ Port 3000    │     Port 3001         │      Port 3002          │
+│ kdlstore.    │  app.kdlstore.com.br  │  admin.kdlstore.com.br  │
+│ com.br       │                       │                         │
+├──────────────┴──────────────────────┴────────────────────────┤
+│                      Supabase (PostgreSQL)                     │
+│              Auth │ RLS │ Storage │ Realtime                   │
+├──────────────────────────────────────────────────────────────┤
+│                      Stripe                                    │
+│         Checkout │ Webhooks │ Customer Portal │ Subscriptions  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Stack Completo
+### Stack
 
 | Camada | Tecnologia | Versão |
 |---|---|---|
-| Frontend | Next.js (App Router) | 16.2.4 |
+| Framework | Next.js App Router | 16.2.4 |
 | Linguagem | TypeScript | 5.x |
 | Styling | Tailwind CSS | 4.x |
-| Backend/DB | Supabase (PostgreSQL) | último |
-| Auth | Supabase Auth | último |
+| Auth + DB | Supabase | último |
 | Pagamentos | Stripe | último |
 | Build | Turborepo | 2.x |
-| Gerenciador de pacotes | pnpm | 9.x |
-| Deploy | Vercel | — |
+| Pacotes | pnpm workspaces | 9.x |
 
 ---
 
-## 2. Módulo: Landing Page
+## 2. Landing Page (`apps/landing`)
 
-**Path:** `apps/landing/`  
-**URL:** `kdlstore.com.br`  
-**Port dev:** 3000  
-**Status:** ✅ Fase 2 Completa
+**URL:** `kdlstore.com.br` | **Port dev:** 3000 | **Status:** ✅ Completo
 
-### 2.1 Estrutura de Arquivos
+### Estrutura de arquivos
 
 ```
 apps/landing/
-├── public/
-│   └── frames/               # 40 frames da animação hero (ezgif-frame-001..040.png)
-├── src/
-│   ├── app/
-│   │   ├── globals.css        # Design system global
-│   │   ├── layout.tsx         # Root layout com metadata e Google Fonts
-│   │   └── page.tsx           # Página principal (composição das seções)
-│   └── components/
-│       ├── Navbar.tsx          # Navbar fixa glassmorphism
-│       ├── HeroScrollAnimation.tsx  # Hero com canvas scrubbing (scroll animation)
-│       ├── ProblemsSection.tsx # Seção Antes/Depois dos problemas
-│       ├── FeaturesSection.tsx # Grid de funcionalidades
-│       ├── ForWhomSection.tsx  # Para quem é? (12 tipos de loja)
-│       ├── PricingSection.tsx  # Planos de preços
-│       ├── FAQSection.tsx      # FAQ accordion
-│       └── Footer.tsx          # Rodapé
-└── package.json               # @kdl/landing
+├── public/frames/          # 40 frames da animação (ezgif-frame-001..040.png)
+├── src/app/
+│   ├── globals.css         # Design system com tokens CSS
+│   ├── layout.tsx          # Root layout + SEO + Google Fonts
+│   └── page.tsx            # Composição das seções
+└── src/components/
+    ├── Navbar.tsx            # Fixa, glassmorphism, mobile-friendly
+    ├── HeroScrollAnimation.tsx  # Canvas scrubbing 40 frames (SSR-safe)
+    ├── ProblemsSection.tsx   # 6 cards Antes/Depois
+    ├── FeaturesSection.tsx   # 9 features grid
+    ├── ForWhomSection.tsx    # 12 tipos de loja
+    ├── PricingSection.tsx    # 3 planos com CTA → app.kdlstore.com.br/cadastro
+    ├── FAQSection.tsx        # 8 perguntas accordion
+    └── Footer.tsx            # Links + social
 ```
 
-### 2.2 Componentes
+### Hero Animation
+- **Técnica:** Canvas Scrubbing — 40 PNGs em `/public/frames/`
+- **Scroll:** `container height = 2400px + viewportHeight`; frame = `floor(scrolled/2400 * 40)`
+- **SSR-safe:** `viewportHeight` estado inicializado via `useEffect`
+- **Loading:** Barra de progresso % até 100% das imagens carregadas
 
-#### `Navbar.tsx`
-- **ID:** `nav-logo`, `nav-desktop`, `nav-cta`, `nav-mobile-toggle`, `nav-mobile-menu`
-- **Tipo:** Client Component (`'use client'`)
-- **Comportamento:** Fixed top, glassmorphism backdrop-blur, colapsa em mobile
-- **Links:** Funcionalidades → `#funcionalidades`, Para quem é? → `#paraquem`, Planos → `#planos`, FAQ → `#faq`
-- **CTAs:** "Entrar" → `https://app.kdlstore.com.br/login`, "Começar agora" → `#planos`
-
-#### `HeroScrollAnimation.tsx`
-- **Tipo:** Client Component
-- **Técnica:** Canvas Scrubbing — 40 frames renderizados em `<canvas>` baseado em `scrollY`
-- **Lógica de scroll:**
-  - Container tem altura: `TOTAL_SCROLL (2400px) + viewportHeight`
-  - Frame exibido = `Math.floor((scrolled / TOTAL_SCROLL) * 40)`
-  - Frames pré-carregados via `Image()` antes da renderização
-- **Loading:** Barra de progresso % enquanto carrega os 40 frames
-- **Gradientes overlay:** Escurecem bordas para integrar com o design escuro
-- **SSR safe:** `viewportHeight` iniciado como 900, atualizado no `useEffect` com `window.innerHeight`
-
-#### `ProblemsSection.tsx`
-- **ID:** `#problemas`
-- **Conteúdo:** 6 cards com problema (Antes) + solução (Com KDL Store)
-- **Problemas mapeados:**
-  1. Sem controle de estoque
-  2. Nota no papel
-  3. Garantia colada no produto
-  4. Fornecedor no telefone
-  5. Sem negociação registrada
-  6. Sem controle financeiro
-
-#### `FeaturesSection.tsx`
-- **ID:** `#funcionalidades`
-- **Conteúdo:** 9 feature cards com ícone, título, descrição e tags coloridas
-- **Módulos:**
-  1. PDV Inteligente
-  2. Controle de Estoque
-  3. Garantia Digital
-  4. Gestão de Clientes
-  5. Fornecedores
-  6. Ordens de Serviço
-  7. Financeiro Completo
-  8. Relatórios e Análises
-  9. Documento de Venda
-
-#### `ForWhomSection.tsx`
-- **ID:** `#paraquem`
-- **Conteúdo:** 12 tipos de loja com ícone e descrição
-
-#### `PricingSection.tsx`
-- **ID:** `#planos`
-- **IDs dos botões:** `btn-plan-starter`, `btn-plan-pro`, `btn-plan-premium`
-- **Planos:**
-  - Starter R$49,90 → `?plano=starter`
-  - Pro R$69,90 → `?plano=pro` *(MAIS POPULAR)*
-  - Premium R$99,90 → `?plano=premium`
-- **Redirect CTA:** `https://app.kdlstore.com.br/cadastro?plano={id}`
-
-#### `FAQSection.tsx`
-- **ID:** `#faq`
-- **IDs:** `faq-btn-0` a `faq-btn-7`, `faq-contact-btn`
-- **Comportamento:** Accordion toggle (open/close por índice)
-- **8 perguntas mapeadas**
-
-#### `Footer.tsx`
-- **IDs:** `footer-instagram`, `footer-whatsapp`
-- **Links:** Produto, Legal, Contato
-
-### 2.3 Design System (globals.css)
+### Design System Tokens
 
 | Token | Valor |
 |---|---|
-| `--kdl-primary` | `#6C47FF` (roxo) |
-| `--kdl-accent` | `#00D4AA` (verde-água) |
+| `--kdl-primary` | `#6C47FF` |
+| `--kdl-accent` | `#00D4AA` |
 | `--kdl-bg` | `#0A0A0F` |
-| `--kdl-surface` | `#111118` |
-| Fonte principal | Inter |
-| Fonte de títulos | Outfit |
-
-**Classes utilitárias:**
-- `.text-gradient` — gradiente roxo→verde no texto
-- `.glass` — glassmorphism com blur e border
-- `.btn-primary` — botão gradiente com hover lift
-- `.btn-secondary` — botão outline
-- `.section-label` — chip de label de seção
-- `.card-hover` — card com hover lift e border glow
-- `.grid-pattern` — background com grade sutil
+| Fonte títulos | Outfit |
+| Fonte corpo | Inter |
 
 ---
 
-## 3. Módulo: App da Loja
+## 3. App da Loja (`apps/store`)
 
-**Path:** `apps/store/`  
-**URL:** `app.kdlstore.com.br`  
-**Port dev:** 3001  
-**Status:** 🔄 Em desenvolvimento (Fase 3)
+**URL:** `app.kdlstore.com.br` | **Port dev:** 3001 | **Status:** ✅ Completo
 
-### 3.1 Módulos Planejados
+### Estrutura de arquivos
 
-| Módulo | Rota | Status |
+```
+apps/store/
+├── app/
+│   ├── globals.css              # Design system (dark premium)
+│   ├── layout.tsx               # Root layout + Google Fonts
+│   ├── page.tsx                 # → redirect /login
+│   ├── login/page.tsx           # Login com Supabase Auth
+│   ├── cadastro/page.tsx        # Signup 2-step + seleção de plano
+│   ├── api/
+│   │   ├── auth/callback/route.ts   # Supabase OAuth callback
+│   │   ├── checkout/route.ts        # Cria sessão Stripe Checkout
+│   │   └── webhook/stripe/route.ts  # Webhook Stripe (POST)
+│   └── app/                     # Rotas autenticadas
+│       ├── layout.tsx            # Shell: Sidebar + Header
+│       ├── dashboard/page.tsx    # KPIs do dia + alertas
+│       ├── pdv/page.tsx          # Ponto de Venda
+│       ├── estoque/page.tsx      # CRUD de produtos + movimentações
+│       ├── clientes/page.tsx     # CRUD de clientes
+│       ├── fornecedores/page.tsx # CRUD de fornecedores + pedidos
+│       ├── os/page.tsx           # Ordens de Serviço (pipeline)
+│       ├── garantias/page.tsx    # Garantias digitais + acionamento
+│       ├── financeiro/page.tsx   # Caixa + A Pagar + A Receber
+│       ├── relatorios/page.tsx   # KPIs mensais + DRE simplificado
+│       └── configuracoes/page.tsx # Loja + Usuários + Assinatura
+├── components/
+│   └── Sidebar.tsx              # Nav lateral com 9 módulos
+├── lib/supabase/
+│   ├── client.ts                # createBrowserClient
+│   └── server.ts                # createServerClient (SSR + cookies)
+└── middleware.ts                # Auth guard + redirect logic
+```
+
+### Middleware Auth (middleware.ts)
+
+| Rota | Autenticado | Não autenticado |
 |---|---|---|
-| Login | `/login` | 🔄 |
-| Cadastro | `/cadastro` | 🔄 |
-| Dashboard | `/app/dashboard` | 🔄 |
-| PDV | `/app/pdv` | 🔄 |
-| Estoque | `/app/estoque` | 🔄 |
-| Clientes | `/app/clientes` | 🔄 |
-| Fornecedores | `/app/fornecedores` | 🔄 |
-| Ordens de Serviço | `/app/os` | 🔄 |
-| Garantias | `/app/garantias` | 🔄 |
-| Financeiro | `/app/financeiro` | 🔄 |
-| Relatórios | `/app/relatorios` | 🔄 |
-| Configurações | `/app/configuracoes` | 🔄 |
+| `/` | → `/app/dashboard` | → `/login` |
+| `/login` | → `/app/dashboard` | ✅ exibe |
+| `/cadastro` | → `/app/dashboard` | ✅ exibe |
+| `/app/*` | ✅ exibe | → `/login` |
+
+### Módulos do App
+
+#### 🛒 PDV (`/app/pdv`)
+- Busca de produto por nome/SKU com dropdown em tempo real
+- Carrinho com edição inline de qty, preço unitário e desconto por item
+- Adição de produto como **brinde** (preço = R$0,00)
+- Busca e vinculação de cliente (opcional)
+- Desconto global em R$
+- 5 formas de pagamento: Dinheiro, Pix, Cartão Débito, Crédito, Prazo
+- Parcelamento (2x a 12x) com cálculo automático da parcela
+- Ao finalizar:
+  - Insere `sales` + `sale_items`
+  - Decrementa estoque via `decrement_stock()` RPC
+  - Insere `cash_transactions` (tipo: `in`)
+  - Se prazo + cliente: gera `accounts_receivable`
+
+#### 📦 Estoque (`/app/estoque`)
+- Tabela com todos os produtos filtráveis por nome/SKU/categoria
+- Cálculo de margem em tempo real (% e badge colorido)
+- Badge de estoque baixo (qty ≤ min_stock)
+- Modal de cadastro/edição com: nome, SKU, categoria, custo, preço venda, estoque, estoque mínimo, unidade
+- Preview de margem no formulário
+- Modal de movimentação: Entrada / Ajuste / Perda com motivo
+
+#### 👥 Clientes (`/app/clientes`)
+- Busca por nome, telefone, CPF/CNPJ, email
+- Pontos de fidelidade (badge ⭐)
+- Modal com endereço completo (rua, cidade, CEP)
+
+#### 🔗 Fornecedores (`/app/fornecedores`)
+- CRUD básico com nome empresa, contato, telefone, email
+- Botão **📦 Pedir** abre modal de pedido rápido (produto, quantidade, observações)
+- Registra em `supplier_orders`
+
+#### 🔧 Ordens de Serviço (`/app/os`)
+- Pipeline com 6 status: `quote → approved → in_progress → completed → billed → cancelled`
+- Contadores de badge por status no header
+- Form: cliente, técnico, descrição, valor, prazo, status visual
+- Ao status `completed`: registra `completed_at`
+
+#### 🛡️ Garantias (`/app/garantias`)
+- Listagem com countdown de dias até vencimento (verde/amarelo/vermelho)
+- Filtro por status (ativa/vencida/acionada)
+- Counters: ativas, vencendo em 30d, vencidas
+- Botão **⚡ Acionar**: cria OS vinculada + marca garantia como `claimed`
+
+#### 💰 Financeiro (`/app/financeiro`)
+- **Aba Caixa:** histórico de entradas/saídas (últimas 50)
+- **Aba A Pagar:** lista com destaque para vencidos, botão "✓ Pagar", modal de nova conta
+- **Aba A Receber:** parcelas com número, cliente, vencimento, botão "✓ Receber"
+- Cards de resumo: saldo, total entradas, saídas, pendente pagar/receber
+
+#### 📈 Relatórios (`/app/relatorios`)
+- KPIs do mês corrente: vendas, faturamento, ticket médio, OS concluídas, receita OS
+- Gráfico de barras (progress bar) por forma de pagamento
+- Resumo de OS por status
+- DRE Simplificado: receita vendas + receita OS = receita bruta
+
+#### ⚙️ Configurações (`/app/configuracoes`)
+- **Aba Loja:** edita nome da loja
+- **Aba Usuários:** lista, adiciona (via admin create user), ativa/desativa, define role
+- **Aba Assinatura:** exibe plano + preço + status + link Stripe Portal + upgrade
+
+### IDs de elementos importantes
+
+| Elemento | ID |
+|---|---|
+| Input busca PDV | `pdv-search` |
+| Busca cliente PDV | `pdv-customer-search` |
+| Desconto global | `pdv-global-discount` |
+| Finalizar venda | `pdv-finalize` |
+| Pagamento (radio) | `pdv-pay-{method}` |
+| Novo produto | `estoque-novo-btn` |
+| Formulário produto | `produto-form` |
+| Salvar produto | `produto-save` |
+| Nova OS | `os-nova-btn` |
+| Acionar garantia | `gar-claim-{id8}` |
+| Tab financeiro | `fin-tab-{caixa\|pagar\|receber}` |
+| Portal assinatura | `subscription-portal-btn` |
+| Login submit | `login-submit` |
+| Cadastro próximo | `cadastro-next` |
+| Cadastro pagar | `cadastro-pay` |
 
 ---
 
-## 4. Módulo: Portal Admin
+## 4. Portal Admin (`apps/admin`)
 
-**Path:** `apps/admin/`  
-**URL:** `admin.kdlstore.com.br`  
-**Port dev:** 3002  
-**Status:** 🔄 Em desenvolvimento (Fase 4)
+**URL:** `admin.kdlstore.com.br` | **Port dev:** 3002 | **Status:** ✅ Base completa
 
-### 4.1 Módulos Planejados
+### Estrutura
 
-| Módulo | Rota | Status |
+```
+apps/admin/
+├── app/
+│   ├── globals.css              # Design system (mais escuro/compacto)
+│   ├── layout.tsx               # Root layout + noindex robots
+│   ├── page.tsx                 # → redirect /dashboard
+│   ├── dashboard/
+│   │   ├── layout.tsx           # Shell: AdminSidebar + Header
+│   │   └── page.tsx             # MRR/ARR + lojas por plano + recentes
+│   ├── tenants/page.tsx         # Lista todas as lojas com plano/Stripe
+│   └── assinaturas/page.tsx     # Assinaturas com links Stripe Dashboard
+└── components/
+    └── AdminSidebar.tsx          # Nav: Dashboard, Lojas, Assinaturas, Planos
+```
+
+### Acesso Admin
+- Usa `SUPABASE_SERVICE_ROLE_KEY` — bypassa RLS completamente
+- Nunca expor no client-side
+- Adicionar autenticação de admin antes do deploy (middleware com cookie secreto)
+
+### Módulos Admin
+
+| Módulo | Rota | Dados |
 |---|---|---|
-| Login Admin | `/login` | 🔄 |
-| Dashboard MRR | `/dashboard` | 🔄 |
-| Lojas (Tenants) | `/tenants` | 🔄 |
-| Assinaturas | `/assinaturas` | 🔄 |
-| Planos | `/planos` | 🔄 |
-| Suporte | `/suporte` | 🔄 |
+| Dashboard | `/dashboard` | MRR, ARR, tenants por plano, últimas lojas |
+| Lojas | `/tenants` | Todas as lojas, plano, status Stripe |
+| Assinaturas | `/assinaturas` | Sub IDs com link direto → Stripe Dashboard |
 
 ---
 
 ## 5. Banco de Dados
 
-**Provider:** Supabase (PostgreSQL)
+**Provider:** Supabase (PostgreSQL) | **Schema:** `docs/schema.sql`
 
-### 5.1 Schema Principal
+### Tabelas
 
+| Tabela | Descrição | RLS |
+|---|---|---|
+| `plans` | 3 planos (starter/pro/premium) | leitura pública |
+| `tenants` | Lojas (multi-tenant) | só vê o próprio |
+| `users` | Extensão de auth.users | só vê do tenant |
+| `categories` | Categorias de produtos | por tenant |
+| `products` | Catálogo de produtos | por tenant |
+| `stock_movements` | Histórico de movimentos | por tenant |
+| `customers` | Clientes da loja | por tenant |
+| `suppliers` | Fornecedores | por tenant |
+| `supplier_orders` | Pedidos a fornecedores | por tenant |
+| `sales` | Vendas finalizadas | por tenant |
+| `sale_items` | Itens de cada venda | por tenant |
+| `warranties` | Garantias emitidas | por tenant |
+| `service_orders` | Ordens de serviço | por tenant |
+| `accounts_receivable` | Parcelas a receber | por tenant |
+| `accounts_payable` | Contas a pagar | por tenant |
+| `cash_transactions` | Fluxo de caixa | por tenant |
+| `admin_users` | Admins internos KDL | — |
+
+### Funções/Triggers
+
+| Nome | Tipo | Descrição |
+|---|---|---|
+| `handle_new_user()` | trigger after insert auth.users | Cria tenant + user row automaticamente no signup |
+| `decrement_stock(product_id, qty)` | RPC | Decrementa estoque com `greatest(0, qty - n)` |
+| `set_warranty_expiry()` | trigger before insert/update warranties | Calcula `expiry_date = issue_date + months` |
+| `auth_tenant_id()` | helper SQL | Retorna `tenant_id` do usuário logado (usado no RLS) |
+
+---
+
+## 6. Integração Stripe
+
+### Rotas de API (`apps/store/app/api/`)
+
+| Rota | Método | Descrição |
+|---|---|---|
+| `/api/checkout` | POST | Cria sessão Stripe Checkout (cria/reutiliza customer) |
+| `/api/webhook/stripe` | POST | Recebe eventos Stripe, sincroniza status no Supabase |
+| `/api/auth/callback` | GET | Callback OAuth/email Supabase |
+
+### Eventos Webhook tratados
+
+| Evento Stripe | Ação no Supabase |
+|---|---|
+| `checkout.session.completed` | Vincula `stripe_customer_id` + `stripe_subscription_id` + ativa tenant |
+| `customer.subscription.created` | Ativa tenant |
+| `customer.subscription.updated` | Atualiza status tenant |
+| `customer.subscription.deleted` | Suspende tenant |
+| `invoice.payment_failed` | Suspende tenant |
+
+### Configuração dos Planos no Stripe
+
+Ao criar os produtos no Stripe, pegar o price_id e atualizar na tabela `plans`:
 ```sql
--- =====================================================
--- MULTI-TENANCY
--- =====================================================
-tenants (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name          TEXT NOT NULL,
-  slug          TEXT UNIQUE NOT NULL,
-  plan_id       UUID REFERENCES plans(id),
-  stripe_customer_id    TEXT,
-  stripe_subscription_id TEXT,
-  status        TEXT DEFAULT 'active', -- active | suspended | cancelled
-  created_at    TIMESTAMPTZ DEFAULT now()
-)
-
-plans (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name          TEXT NOT NULL,          -- 'starter' | 'pro' | 'premium'
-  display_name  TEXT NOT NULL,
-  price_monthly NUMERIC(10,2) NOT NULL,
-  max_users     INTEGER,                -- NULL = ilimitado
-  max_products  INTEGER,                -- NULL = ilimitado
-  stripe_price_id TEXT,
-  features      JSONB,
-  is_active     BOOLEAN DEFAULT true,
-  created_at    TIMESTAMPTZ DEFAULT now()
-)
-
--- =====================================================
--- AUTH (extensão Supabase Auth)
--- =====================================================
-users (
-  id        UUID PRIMARY KEY REFERENCES auth.users(id),
-  tenant_id UUID REFERENCES tenants(id),
-  name      TEXT,
-  role      TEXT DEFAULT 'seller', -- owner | manager | seller | technician
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now()
-)
-
--- =====================================================
--- PRODUTOS E ESTOQUE
--- =====================================================
-categories (
-  id UUID PK, tenant_id UUID,
-  name TEXT, parent_id UUID
-)
-
-products (
-  id UUID PK, tenant_id UUID,
-  name TEXT, sku TEXT,
-  category_id UUID,
-  cost_price NUMERIC(10,2),
-  sale_price NUMERIC(10,2),
-  stock_qty INTEGER DEFAULT 0,
-  min_stock INTEGER DEFAULT 0,
-  unit TEXT DEFAULT 'un',
-  image_url TEXT,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ
-)
-
-stock_movements (
-  id UUID PK, tenant_id UUID,
-  product_id UUID, user_id UUID,
-  type TEXT, -- entry | exit | adjustment | loss
-  qty INTEGER,
-  reason TEXT,
-  reference_type TEXT, -- sale | purchase_order | manual
-  reference_id UUID,
-  created_at TIMESTAMPTZ
-)
-
--- =====================================================
--- CLIENTES E FORNECEDORES
--- =====================================================
-customers (
-  id UUID PK, tenant_id UUID,
-  name TEXT, cpf_cnpj TEXT,
-  phone TEXT, email TEXT,
-  address JSONB,
-  loyalty_points INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ
-)
-
-suppliers (
-  id UUID PK, tenant_id UUID,
-  name TEXT, contact_name TEXT,
-  phone TEXT, email TEXT,
-  created_at TIMESTAMPTZ
-)
-
--- =====================================================
--- VENDAS
--- =====================================================
-sales (
-  id UUID PK, tenant_id UUID,
-  customer_id UUID, seller_id UUID,
-  subtotal NUMERIC(10,2),
-  discount NUMERIC(10,2) DEFAULT 0,
-  total NUMERIC(10,2),
-  payment_method TEXT, -- cash | pix | card | credit
-  installments INTEGER DEFAULT 1,
-  status TEXT DEFAULT 'completed', -- completed | cancelled | returned
-  notes TEXT,
-  created_at TIMESTAMPTZ
-)
-
-sale_items (
-  id UUID PK, sale_id UUID,
-  product_id UUID,
-  qty INTEGER,
-  unit_price NUMERIC(10,2),
-  discount NUMERIC(10,2) DEFAULT 0,
-  is_gift BOOLEAN DEFAULT false,
-  subtotal NUMERIC(10,2)
-)
-
--- =====================================================
--- GARANTIAS
--- =====================================================
-warranties (
-  id UUID PK, tenant_id UUID,
-  sale_item_id UUID, sale_id UUID,
-  customer_id UUID, product_id UUID,
-  warranty_months INTEGER,
-  issue_date DATE,
-  expiry_date DATE,
-  status TEXT DEFAULT 'active', -- active | expired | claimed
-  notes TEXT
-)
-
--- =====================================================
--- ORDENS DE SERVIÇO
--- =====================================================
-service_orders (
-  id UUID PK, tenant_id UUID,
-  customer_id UUID, technician_id UUID,
-  warranty_id UUID, -- opcional: OS por garantia
-  status TEXT, -- quote | approved | in_progress | completed | billed | cancelled
-  description TEXT,
-  price NUMERIC(10,2),
-  estimated_date DATE,
-  completed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ
-)
-
--- =====================================================
--- FINANCEIRO
--- =====================================================
-accounts_receivable (
-  id UUID PK, tenant_id UUID,
-  sale_id UUID, customer_id UUID,
-  installment_number INTEGER,
-  amount NUMERIC(10,2),
-  due_date DATE,
-  paid_at TIMESTAMPTZ,
-  status TEXT DEFAULT 'pending' -- pending | paid | overdue
-)
-
-accounts_payable (
-  id UUID PK, tenant_id UUID,
-  supplier_id UUID,
-  description TEXT,
-  category TEXT, -- rent | utilities | supplier | other
-  amount NUMERIC(10,2),
-  due_date DATE,
-  paid_at TIMESTAMPTZ,
-  status TEXT DEFAULT 'pending'
-)
-
-cash_transactions (
-  id UUID PK, tenant_id UUID,
-  type TEXT, -- in | out
-  amount NUMERIC(10,2),
-  description TEXT,
-  reference_id UUID,
-  reference_type TEXT,
-  user_id UUID,
-  created_at TIMESTAMPTZ
-)
-
--- =====================================================
--- ADMIN KDL
--- =====================================================
-admin_users (
-  id UUID PK,
-  email TEXT UNIQUE,
-  role TEXT DEFAULT 'super_admin',
-  created_at TIMESTAMPTZ
-)
+UPDATE plans SET stripe_price_id = 'price_xxx' WHERE name = 'starter';
+UPDATE plans SET stripe_price_id = 'price_xxx' WHERE name = 'pro';
+UPDATE plans SET stripe_price_id = 'price_xxx' WHERE name = 'premium';
 ```
 
 ---
 
-## 6. Fluxos de Negócio
+## 7. Fluxos de Negócio
 
-### 6.1 Fluxo de Assinatura (Onboarding)
-
-```
-Landing Page
-  ↓
-Clica "Começar agora" → #planos
-  ↓
-Seleciona plano (Starter/Pro/Premium)
-  ↓
-Redireciona: app.kdlstore.com.br/cadastro?plano={id}
-  ↓
-Formulário: nome, email, senha, nome da loja
-  ↓
-Stripe Checkout (cartão de crédito)
-  ↓
-Webhook: stripe.checkout.session.completed
-  ↓
-  ├── Cria tenant no Supabase
-  ├── Cria usuário auth com role 'owner'
-  ├── Vincula stripe_subscription_id
-  └── Envia email de boas-vindas
-  ↓
-Redirect → app.kdlstore.com.br/app/dashboard
-```
-
-### 6.2 Fluxo de Venda Completa
+### Onboarding de novo lojista
 
 ```
-PDV: Busca produto
+Landing: clica "Começar agora" (plano selecionado)
   ↓
-Adiciona ao carrinho (qty, desconto por item)
-  ↓ [opcional]
-Adiciona brinde (produto com is_gift=true, valor=0)
+/cadastro?plano=pro  (passo 1: dados pessoais + loja + senha)
+  ↓
+/cadastro           (passo 2: resumo do pedido)
+  ↓
+POST /api/checkout  → Stripe Checkout Session criada
+  ↓
+Stripe Checkout     → cliente paga
+  ↓
+Webhook: checkout.session.completed
+  ├── stripe_customer_id vinculado ao tenant
+  ├── stripe_subscription_id salvo
+  └── tenant.status = 'active'
+  ↓
+Cliente redirecionado para /app/dashboard
+```
+
+### Venda completa (PDV)
+
+```
+Busca produto → dropdown autocomplete
+  ↓
+Adiciona ao carrinho (qty, preço, desconto por item)
+  ↓ [opcional] Adiciona brinde (is_gift=true, unit_price=0)
   ↓
 Aplica desconto global
   ↓
-Seleciona / cadastra cliente
+Seleciona cliente (para garantia / fiado)
   ↓
-Escolhe pagamento (dinheiro/pix/cartão/prazo)
-  ↓ [se prazo/cartão]
-Define parcelas → gera accounts_receivable
+Escolhe pagamento → [crédito] define parcelas
   ↓
-Finaliza venda →
-  ├── Insere sale + sale_items
-  ├── Baixa stock_qty dos produtos
-  ├── Gera cash_transaction (tipo: in)
-  ├── Gera warranty por produto (se prazo configurado)
-  ├── Gera PDF: Documento de Venda
-  └── Gera PDF: Certificado(s) de Garantia
+Finaliza:
+  ├── INSERT sales
+  ├── INSERT sale_items
+  ├── RPC decrement_stock() por produto
+  ├── INSERT cash_transactions (in)
+  └── [prazo] INSERT accounts_receivable (N parcelas)
 ```
 
-### 6.3 Fluxo de Garantia → OS
+### Garantia → OS
 
 ```
-Cliente reclama garantia
+Busca garantia (produto / cliente / código)
   ↓
-Busca por: cliente / produto / número garantia
+"⚡ Acionar" →
+  ├── INSERT service_orders (status=approved, warranty_id vinculado)
+  └── UPDATE warranties SET status='claimed'
   ↓
-Sistema verifica: status = 'active' E data <= expiry_date
+Técnico acessa OS → executa → status=completed
   ↓
-Abre OS automaticamente (warranty_id vinculado)
-  ↓
-Técnico executa reparo (status: in_progress)
-  ↓
-Conclui OS (status: completed)
-  ↓
-Garantia: status = 'claimed'
-  ↓
-Notifica cliente (email/WhatsApp)
+Cobrança (se aplicável) → status=billed
 ```
 
 ---
 
-## 7. Planos e Limites
+## 8. Planos e Limites
 
 | Funcionalidade | Starter R$49,90 | Pro R$69,90 | Premium R$99,90 |
 |---|:---:|:---:|:---:|
 | Usuários | 1 | 3 | Ilimitado |
 | Produtos | 300 | 1.000 | Ilimitado |
-| PDV completo | ✅ | ✅ | ✅ |
-| Descontos e brindes | ✅ | ✅ | ✅ |
-| Controle de estoque | ✅ | ✅ | ✅ |
-| Cadastro de clientes | ✅ | ✅ | ✅ |
-| Documento de venda PDF | ✅ | ✅ | ✅ |
-| Garantia digital PDF | ✅ | ✅ | ✅ |
+| PDV + Descontos + Brindes | ✅ | ✅ | ✅ |
+| Estoque + Movimentações | ✅ | ✅ | ✅ |
+| Clientes | ✅ | ✅ | ✅ |
+| Garantia Digital PDF | ✅ | ✅ | ✅ |
+| Documento de Venda | ✅ | ✅ | ✅ |
 | Relatórios básicos | ✅ | ✅ | ✅ |
-| Fornecedores | ❌ | ✅ | ✅ |
-| Pedidos de fornecedor | ❌ | ✅ | ✅ |
+| Fornecedores + Pedidos | ❌ | ✅ | ✅ |
 | Ordens de Serviço | ❌ | ✅ | ✅ |
-| Contas a pagar/receber | ❌ | ✅ | ✅ |
-| Fluxo de caixa | ❌ | ✅ | ✅ |
+| Financeiro (caixa/pagar/receber) | ❌ | ✅ | ✅ |
 | Parcelamento | ❌ | ✅ | ✅ |
 | Exportação CSV/PDF | ❌ | ✅ | ✅ |
-| Múltiplos vendedores + comissão | ❌ | ❌ | ✅ |
-| Relatórios avançados | ❌ | ❌ | ✅ |
-| DRE Simplificado | ❌ | ❌ | ✅ |
+| Comissões de vendedores | ❌ | ❌ | ✅ |
+| Relatórios avançados + DRE | ❌ | ❌ | ✅ |
 | Programa de fidelidade | ❌ | ❌ | ✅ |
 | Notificações WhatsApp | ❌ | ❌ | ✅ |
-| Suporte | Email | Email | Prioritário |
+| Suporte | Email | Email prioritário | Prioritário |
 
 ---
 
-## 8. Variáveis de Ambiente
+## 9. Variáveis de Ambiente
 
 ### `apps/landing/.env.local`
 ```env
@@ -537,25 +430,45 @@ NEXT_PUBLIC_ADMIN_URL=https://admin.kdlstore.com.br
 
 ### `apps/store/.env.local`
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+
 NEXT_PUBLIC_APP_URL=https://app.kdlstore.com.br
 NEXT_PUBLIC_LANDING_URL=https://kdlstore.com.br
 ```
 
 ### `apps/admin/.env.local`
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
 NEXT_PUBLIC_ADMIN_URL=https://admin.kdlstore.com.br
+ADMIN_SECRET=uma_senha_muito_segura
 ```
 
 ---
 
-*Este documento é atualizado automaticamente a cada commit significativo.*  
-*Versão: 0.2.0 — Fase 2 Landing Page Completa*
+## 10. Próximos Passos
+
+### Fase 5 — Integração e Deploy (a fazer)
+
+- [ ] Criar conta Supabase → rodar `docs/schema.sql` no SQL Editor
+- [ ] Criar conta Stripe → criar produtos/preços → atualizar `stripe_price_id` nas plans
+- [ ] Configurar variáveis de ambiente em cada app
+- [ ] Configurar webhook Stripe apontando para `https://app.kdlstore.com.br/api/webhook/stripe`
+- [ ] Deploy no Vercel (3 projetos separados com domínios)
+- [ ] Implementar geração de PDF de venda e garantia (react-pdf ou puppeteer)
+- [ ] Implementar exportação CSV (relatórios)
+- [ ] Adicionar autenticação ao portal admin (middleware com cookie secreto)
+- [ ] Implementar programa de fidelidade (Premium)
+- [ ] Implementar integração WhatsApp (Premium) via Twilio ou Z-API
+
+---
+
+*Versão: 0.4.0 — Fase 4 Completa*
