@@ -1,5 +1,3 @@
-'use client';
-
 const PROBLEMS = [
   {
     icon: '📄',
@@ -10,7 +8,7 @@ const PROBLEMS = [
   {
     icon: '🧾',
     title: 'Nota no papel',
-    description: 'Um pedaço de papel rasgado como comprovante de venda não gera confiança.',
+    description: 'Um pedaço de papel rasgado como comprovante não gera confiança.',
     solution: 'PDV digital com documento de venda em PDF, profissional e rastreável.',
   },
   {
@@ -41,82 +39,46 @@ const PROBLEMS = [
 
 export default function ProblemsSection() {
   return (
-    <section id="problemas" className="py-32 relative overflow-hidden">
-      {/* Background decoration */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-32"
-        style={{ background: 'linear-gradient(to bottom, transparent, rgba(108,71,255,0.5), transparent)' }}
-      />
+    <section id="problemas" style={{ padding: '6rem 0', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 1, height: 120, background: 'linear-gradient(to bottom, transparent, rgba(108,71,255,0.5), transparent)', pointerEvents: 'none' }} />
 
-      <div className="max-w-7xl mx-auto px-6">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem' }}>
         {/* Header */}
-        <div className="text-center mb-20">
-          <div className="section-label justify-center mx-auto w-fit">
+        <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
+          <div className="section-label" style={{ display: 'inline-flex', marginBottom: '1.5rem' }}>
             <span>🎯</span> Problemas reais, respostas reais
           </div>
-          <h2 className="text-4xl md:text-5xl font-black mb-6">
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', color: '#F4F4FF' }}>
             Reconhece algum desses{' '}
             <span className="text-gradient">problemas?</span>
           </h2>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto">
-            Criamos o KDL Store depois de ver de perto como pequenas lojas ainda funcionam
-            na base do improviso. Cada funcionalidade resolve um problema real.
+          <p style={{ fontSize: '1.1rem', color: 'rgba(244,244,255,0.5)', maxWidth: 560, margin: '0 auto' }}>
+            Criamos o KDL Store depois de ver de perto como pequenas lojas ainda funcionam na base do improviso.
           </p>
         </div>
 
-        {/* Problems grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PROBLEMS.map((problem, i) => (
+        {/* Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          {PROBLEMS.map((p, i) => (
             <div
               key={i}
-              className="glass rounded-2xl p-6 card-hover group"
-              style={{ animationDelay: `${i * 0.1}s` }}
+              className="card-hover"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 16,
+                padding: '1.75rem',
+              }}
             >
-              {/* Icon */}
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5 transition-transform group-hover:scale-110"
-                style={{ background: 'rgba(108,71,255,0.12)' }}
-              >
-                {problem.icon}
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(108,71,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, marginBottom: '1.25rem' }}>
+                {p.icon}
               </div>
-
-              {/* Before */}
-              <div className="mb-4">
-                <span
-                  className="text-xs font-bold uppercase tracking-wider mb-2 block"
-                  style={{ color: 'rgba(255,100,100,0.7)' }}
-                >
-                  Antes
-                </span>
-                <h3
-                  className="text-base font-bold mb-1"
-                  style={{ fontFamily: 'Outfit, sans-serif' }}
-                >
-                  {problem.title}
-                </h3>
-                <p className="text-sm text-white/40 leading-relaxed">
-                  {problem.description}
-                </p>
-              </div>
-
-              {/* Divider */}
-              <div
-                className="h-px w-full my-4"
-                style={{ background: 'linear-gradient(to right, rgba(108,71,255,0.3), rgba(0,212,170,0.3))' }}
-              />
-
-              {/* After */}
-              <div>
-                <span
-                  className="text-xs font-bold uppercase tracking-wider mb-2 block"
-                  style={{ color: '#00D4AA' }}
-                >
-                  Com KDL Store
-                </span>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  {problem.solution}
-                </p>
-              </div>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,100,100,0.7)', display: 'block', marginBottom: '0.4rem' }}>Antes</span>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#F4F4FF' }}>{p.title}</h3>
+              <p style={{ fontSize: '0.875rem', color: 'rgba(244,244,255,0.4)', lineHeight: 1.65, marginBottom: '1.25rem' }}>{p.description}</p>
+              <div style={{ height: 1, background: 'linear-gradient(to right, rgba(108,71,255,0.3), rgba(0,212,170,0.3))', marginBottom: '1.25rem' }} />
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#00D4AA', display: 'block', marginBottom: '0.4rem' }}>Com KDL Store</span>
+              <p style={{ fontSize: '0.875rem', color: 'rgba(244,244,255,0.65)', lineHeight: 1.65 }}>{p.solution}</p>
             </div>
           ))}
         </div>

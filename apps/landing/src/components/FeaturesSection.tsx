@@ -1,146 +1,65 @@
-'use client';
-
 const FEATURES = [
-  {
-    icon: '🛒',
-    title: 'PDV Inteligente',
-    description:
-      'Ponto de venda completo com busca por nome ou código, descontos por item, brindes, múltiplas formas de pagamento e parcelamento.',
-    color: '#6C47FF',
-    tags: ['Desconto', 'Brinde', 'Parcelamento'],
-  },
-  {
-    icon: '📦',
-    title: 'Controle de Estoque',
-    description:
-      'Estoque em tempo real com histórico de movimentações, alertas de mínimo, entrada e saída. Nunca mais venda o que não tem.',
-    color: '#00D4AA',
-    tags: ['Alerta', 'Histórico', 'Inventário'],
-  },
-  {
-    icon: '🛡️',
-    title: 'Garantia Digital',
-    description:
-      'Certificado de garantia gerado automaticamente a cada venda. PDF profissional com QR code de validação por produto.',
-    color: '#FF6B47',
-    tags: ['PDF', 'QR Code', 'Automático'],
-  },
-  {
-    icon: '👥',
-    title: 'Gestão de Clientes',
-    description:
-      'Cadastro completo com histórico de compras, saldo devedor e programa de fidelidade. Conheça cada cliente.',
-    color: '#FFD447',
-    tags: ['Histórico', 'Fidelidade', 'CRM'],
-  },
-  {
-    icon: '🔗',
-    title: 'Fornecedores',
-    description:
-      'Cadastre fornecedores, vincule produtos e registre pedidos. Histórico completo de cada solicitação e entrega.',
-    color: '#47C4FF',
-    tags: ['Pedidos', 'Histórico', 'Contatos'],
-  },
-  {
-    icon: '🔧',
-    title: 'Ordens de Serviço',
-    description:
-      'Registre serviços de instalação, reparo e manutenção. Fluxo completo: orçamento → aprovação → execução → cobrança.',
-    color: '#B847FF',
-    tags: ['OS', 'Status', 'Instalação'],
-  },
-  {
-    icon: '💰',
-    title: 'Financeiro Completo',
-    description:
-      'Contas a pagar e receber, fluxo de caixa, DRE simplificado. Saiba exatamente quanto sua loja lucra.',
-    color: '#47FF8B',
-    tags: ['Fluxo de Caixa', 'DRE', 'Relatórios'],
-  },
-  {
-    icon: '📊',
-    title: 'Relatórios e Análises',
-    description:
-      'Vendas por período, produto mais vendido, ticket médio, performance de vendedores. Decisões baseadas em dados.',
-    color: '#FF47A0',
-    tags: ['Gráficos', 'Exportar', 'Dashboard'],
-  },
-  {
-    icon: '🧾',
-    title: 'Documento de Venda',
-    description:
-      'Emita comprovantes de venda em PDF com dados do cliente, produtos, valores e forma de pagamento. Profissional e rastreável.',
-    color: '#FF9147',
-    tags: ['PDF', 'Profissional', 'Rastreável'],
-  },
+  { icon: '🛒', title: 'PDV Inteligente', description: 'Ponto de venda completo com busca por nome ou código, descontos por item, brindes, múltiplas formas de pagamento e parcelamento.', color: '#6C47FF', tags: ['Desconto', 'Brinde', 'Parcelamento'] },
+  { icon: '📦', title: 'Controle de Estoque', description: 'Estoque em tempo real com histórico de movimentações, alertas de mínimo, entrada e saída. Nunca mais venda o que não tem.', color: '#00D4AA', tags: ['Alerta', 'Histórico', 'Inventário'] },
+  { icon: '🛡️', title: 'Garantia Digital', description: 'Certificado de garantia gerado automaticamente a cada venda. PDF profissional com QR code de validação por produto.', color: '#FF6B47', tags: ['PDF', 'QR Code', 'Automático'] },
+  { icon: '👥', title: 'Gestão de Clientes', description: 'Cadastro completo com histórico de compras, saldo devedor e programa de fidelidade. Conheça cada cliente.', color: '#FFD447', tags: ['Histórico', 'Fidelidade', 'CRM'] },
+  { icon: '🔗', title: 'Fornecedores', description: 'Cadastre fornecedores, vincule produtos e registre pedidos. Histórico completo de cada solicitação e entrega.', color: '#47C4FF', tags: ['Pedidos', 'Histórico', 'Contatos'] },
+  { icon: '🔧', title: 'Ordens de Serviço', description: 'Registre serviços de instalação, reparo e manutenção. Fluxo completo: orçamento → aprovação → execução → cobrança.', color: '#B847FF', tags: ['OS', 'Status', 'Instalação'] },
+  { icon: '💰', title: 'Financeiro Completo', description: 'Contas a pagar e receber, fluxo de caixa, DRE simplificado. Saiba exatamente quanto sua loja lucra.', color: '#47FF8B', tags: ['Fluxo de Caixa', 'DRE', 'Relatórios'] },
+  { icon: '📊', title: 'Relatórios e Análises', description: 'Vendas por período, produto mais vendido, ticket médio, performance de vendedores. Decisões baseadas em dados.', color: '#FF47A0', tags: ['Gráficos', 'Exportar', 'Dashboard'] },
+  { icon: '🧾', title: 'Documento de Venda', description: 'Emita comprovantes de venda em PDF com dados do cliente, produtos, valores e forma de pagamento. Profissional e rastreável.', color: '#FF9147', tags: ['PDF', 'Profissional', 'Rastreável'] },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section id="funcionalidades" className="py-32 relative grid-pattern">
-      {/* Gradient overlay sobre o grid */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0F] via-transparent to-[#0A0A0F] pointer-events-none" />
+    <section id="funcionalidades" style={{ padding: '6rem 0', position: 'relative', background: 'rgba(255,255,255,0.01)' }}>
+      {/* Grid pattern background */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        backgroundImage: 'linear-gradient(rgba(108,71,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(108,71,255,0.04) 1px, transparent 1px)',
+        backgroundSize: '60px 60px',
+      }} />
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, #0A0A0F 0%, transparent 15%, transparent 85%, #0A0A0F 100%)' }} />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
         {/* Header */}
-        <div className="text-center mb-20">
-          <div className="section-label justify-center mx-auto w-fit">
+        <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
+          <div className="section-label" style={{ display: 'inline-flex', marginBottom: '1.5rem' }}>
             <span>⚡</span> Funcionalidades
           </div>
-          <h2 className="text-4xl md:text-5xl font-black mb-6">
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', color: '#F4F4FF' }}>
             Tudo que sua loja{' '}
             <span className="text-gradient">precisa</span>
           </h2>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto">
-            Cada módulo foi desenhado a partir das necessidades reais do pequeno comércio
-            brasileiro. Sem complicação, sem burocracia.
+          <p style={{ fontSize: '1.1rem', color: 'rgba(244,244,255,0.5)', maxWidth: 560, margin: '0 auto' }}>
+            Cada módulo foi desenhado a partir das necessidades reais do pequeno comércio brasileiro.
           </p>
         </div>
 
-        {/* Features grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {FEATURES.map((feat, i) => (
+        {/* Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
+          {FEATURES.map((f, i) => (
             <div
               key={i}
-              className="glass rounded-2xl p-6 card-hover group relative overflow-hidden"
+              className="card-hover"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 16,
+                padding: '1.75rem',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
             >
-              {/* Glow accent */}
-              <div
-                className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-10 group-hover:opacity-20 transition-opacity"
-                style={{ background: feat.color, filter: 'blur(40px)' }}
-              />
-
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4 transition-transform group-hover:scale-110"
-                style={{ background: `${feat.color}18` }}
-              >
-                {feat.icon}
+              <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: f.color, opacity: 0.08, filter: 'blur(30px)', pointerEvents: 'none' }} />
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: `${f.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, marginBottom: '1rem' }}>
+                {f.icon}
               </div>
-
-              <h3
-                className="text-lg font-bold mb-2"
-                style={{ fontFamily: 'Outfit, sans-serif' }}
-              >
-                {feat.title}
-              </h3>
-              <p className="text-sm text-white/50 leading-relaxed mb-4">
-                {feat.description}
-              </p>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2">
-                {feat.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      background: `${feat.color}15`,
-                      color: feat.color,
-                      border: `1px solid ${feat.color}30`,
-                    }}
-                  >
-                    {tag}
-                  </span>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.6rem', color: '#F4F4FF' }}>{f.title}</h3>
+              <p style={{ fontSize: '0.875rem', color: 'rgba(244,244,255,0.5)', lineHeight: 1.65, marginBottom: '1.25rem' }}>{f.description}</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {f.tags.map(tag => (
+                  <span key={tag} style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: 100, background: `${f.color}15`, color: f.color, border: `1px solid ${f.color}28` }}>{tag}</span>
                 ))}
               </div>
             </div>

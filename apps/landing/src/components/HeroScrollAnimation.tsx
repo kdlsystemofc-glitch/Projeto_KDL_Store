@@ -1,238 +1,268 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-const TOTAL_FRAMES = 40;
-const SCROLL_HEIGHT_PER_FRAME = 60;
-const TOTAL_SCROLL = TOTAL_FRAMES * SCROLL_HEIGHT_PER_FRAME;
+export default function HeroSection() {
+  const imgRef = useRef<HTMLDivElement>(null);
 
-function getFramePath(index: number): string {
-  const n = String(index + 1).padStart(3, '0');
-  return `/frames/ezgif-frame-${n}.png`;
-}
-
-export default function HeroScrollAnimation() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const imagesRef = useRef<(HTMLImageElement | null)[]>(Array(TOTAL_FRAMES).fill(null));
-  const currentFrameRef = useRef(0);
-  const animFrameRef = useRef<number | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [loadProgress, setLoadProgress] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(900);
-
-  // Set viewport height on mount (client-only)
   useEffect(() => {
-    setViewportHeight(window.innerHeight);
-    const onResize = () => setViewportHeight(window.innerHeight);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+    const el = imgRef.current;
+    if (!el) return;
 
-  // Pré-carrega todos os frames
-  useEffect(() => {
-    let count = 0;
-    const images = imagesRef.current;
-
-    for (let i = 0; i < TOTAL_FRAMES; i++) {
-      const img = new Image();
-      img.src = getFramePath(i);
-      img.onload = () => {
-        images[i] = img;
-        count++;
-        setLoadProgress(Math.round((count / TOTAL_FRAMES) * 100));
-        if (count === TOTAL_FRAMES) {
-          setLoaded(true);
-          drawFrame(0);
-        }
-      };
-      img.onerror = () => {
-        count++;
-        if (count === TOTAL_FRAMES) setLoaded(true);
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function drawFrame(frameIndex: number) {
-    const canvas = canvasRef.current;
-    const img = imagesRef.current[frameIndex];
-    if (!canvas || !img) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
-    const x = (canvas.width - img.width * scale) / 2;
-    const y = (canvas.height - img.height * scale) / 2;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-  }
-
-  // Resize canvas
-  useEffect(() => {
-    function resize() {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      drawFrame(currentFrameRef.current);
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
-
-  // Scroll handler
-  useEffect(() => {
-    if (!loaded) return;
-
-    function onScroll() {
-      const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const scrolled = -rect.top;
-      const progress = Math.max(0, Math.min(1, scrolled / TOTAL_SCROLL));
-      const targetFrame = Math.min(TOTAL_FRAMES - 1, Math.floor(progress * TOTAL_FRAMES));
-
-      if (targetFrame !== currentFrameRef.current) {
-        currentFrameRef.current = targetFrame;
-        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-        animFrameRef.current = requestAnimationFrame(() => drawFrame(targetFrame));
-      }
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // Parallax sutil: image move up slightly
+      el.style.transform = `translateY(${scrollY * 0.12}px) scale(${1 + scrollY * 0.00015})`;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{ height: `${TOTAL_SCROLL + viewportHeight}px` }}
-      className="relative"
+    <section
+      style={{
+        minHeight: '100vh',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden',
+        background: 'var(--kdl-bg)',
+      }}
     >
-      {/* Sticky canvas container */}
-      <div className="sticky top-0 w-full h-screen overflow-hidden">
-        {/* Loading overlay */}
-        {!loaded && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0A0A0F]">
-            <div
-              className="w-48 h-1.5 rounded-full overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.1)' }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{
-                  width: `${loadProgress}%`,
-                  background: 'linear-gradient(90deg, #6C47FF, #00D4AA)',
-                }}
-              />
+      {/* Background glows */}
+      <div
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'radial-gradient(ellipse 80% 60% at 70% 50%, rgba(108,71,255,0.18) 0%, transparent 65%), radial-gradient(ellipse 60% 60% at 30% 80%, rgba(0,212,170,0.10) 0%, transparent 60%)',
+        }}
+      />
+
+      {/* Grid pattern */}
+      <div
+        className="grid-pattern"
+        style={{ position: 'absolute', inset: 0, opacity: 0.4, pointerEvents: 'none' }}
+      />
+
+      {/* Main content */}
+      <div
+        style={{
+          maxWidth: 1280, margin: '0 auto', padding: '0 2rem',
+          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          alignItems: 'center', gap: '4rem', width: '100%',
+          paddingTop: '5rem',
+        }}
+        className="hero-grid"
+      >
+        {/* Left — copy */}
+        <div style={{ position: 'relative', zIndex: 2 }} className="animate-fade-in-up">
+          {/* Label */}
+          <div className="section-label" style={{ marginBottom: '1.5rem' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D4AA', display: 'inline-block' }} />
+            Sistema completo para lojistas
+          </div>
+
+          <h1
+            style={{
+              fontFamily: 'Outfit, sans-serif',
+              fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+              fontWeight: 900,
+              lineHeight: 1.05,
+              marginBottom: '1.5rem',
+              color: '#F4F4FF',
+            }}
+          >
+            Sua loja,{' '}
+            <span className="text-gradient">do jeito<br />certo</span>
+          </h1>
+
+          <p
+            style={{
+              fontSize: '1.125rem',
+              lineHeight: 1.75,
+              color: 'rgba(244,244,255,0.6)',
+              maxWidth: 480,
+              marginBottom: '2.5rem',
+            }}
+          >
+            Estoque, PDV, garantias digitais, clientes, financeiro e muito mais — tudo integrado para pequenas lojas que querem crescer com profissionalismo.
+          </p>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
+            <a href="#planos" className="btn-primary" id="hero-cta-primary">
+              Começar agora
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
+            <a href="#funcionalidades" className="btn-secondary" id="hero-cta-secondary">
+              Ver funcionalidades
+            </a>
+          </div>
+
+          {/* Social proof */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', marginRight: 4 }}>
+              {['#6C47FF', '#00D4AA', '#FF6B47', '#FFD447'].map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 34, height: 34, borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${c}cc, ${c})`,
+                    border: '2px solid #0A0A0F',
+                    marginLeft: i === 0 ? 0 : -10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700, color: '#fff',
+                  }}
+                >
+                  {['L', 'V', 'M', 'A'][i]}
+                </div>
+              ))}
             </div>
-            <p className="mt-3 text-sm font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              {loadProgress}%
+            <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)' }}>
+              <span style={{ color: '#F4F4FF', fontWeight: 700 }}>+500 lojistas</span> já usam o KDL Store
             </p>
           </div>
-        )}
 
-        {/* Canvas */}
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full"
-          style={{ display: 'block' }}
-        />
-
-        {/* Gradient overlays */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(10,10,15,0.4) 0%, transparent 30%, transparent 60%, #0A0A0F 100%)',
-          }}
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'linear-gradient(to right, rgba(10,10,15,0.6) 0%, transparent 60%)',
-          }}
-        />
-
-        {/* Hero content overlay */}
-        <div className="absolute inset-0 flex items-center pointer-events-none">
-          <div className="max-w-7xl mx-auto px-6 w-full">
-            <div className="max-w-2xl animate-fade-in-up">
-              <div className="section-label pointer-events-auto">
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: '#00D4AA' }}
-                />
-                Novo jeito de gerenciar
+          {/* Stats row */}
+          <div
+            style={{
+              display: 'flex', gap: '2rem', marginTop: '3rem',
+              paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.07)',
+            }}
+          >
+            {[
+              { value: '100%', label: 'na nuvem' },
+              { value: '< 2min', label: 'para configurar' },
+              { value: '24/7', label: 'disponível' },
+            ].map((s) => (
+              <div key={s.label}>
+                <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem', fontWeight: 800, color: '#F4F4FF' }}>{s.value}</p>
+                <p style={{ fontSize: '0.75rem', color: 'rgba(244,244,255,0.4)', marginTop: 2 }}>{s.label}</p>
               </div>
-              <h1
-                className="text-5xl md:text-7xl font-black leading-tight mb-6"
-                style={{ fontFamily: 'Outfit, sans-serif' }}
-              >
-                Sua loja,{' '}
-                <span className="text-gradient">do jeito certo</span>
-              </h1>
-              <p
-                className="text-lg md:text-xl mb-10 leading-relaxed max-w-xl"
-                style={{ color: 'rgba(255,255,255,0.6)' }}
-              >
-                Estoque, vendas, garantias, clientes e muito mais — tudo integrado para
-                pequenas lojas que querem crescer com profissionalismo.
-              </p>
-              <div className="flex flex-wrap gap-4 pointer-events-auto">
-                <a href="#planos" className="btn-primary">
-                  Começar agora
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </a>
-                <a href="#funcionalidades" className="btn-secondary">
-                  Ver funcionalidades
-                </a>
-              </div>
-
-              {/* Social proof */}
-              <div className="flex items-center gap-4 mt-10">
-                <div className="flex -space-x-2">
-                  {['#6C47FF', '#00D4AA', '#FF6B47', '#FFD447'].map((c, i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 rounded-full border-2"
-                      style={{ background: c, borderColor: '#0A0A0F' }}
-                    />
-                  ))}
-                </div>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  <span className="text-white font-semibold">+500 lojistas</span> já usam o KDL Store
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-          <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Role para explorar
-          </p>
+        {/* Right — 3D illustration */}
+        <div
+          style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {/* Glow behind image */}
           <div
-            className="w-5 h-8 rounded-full flex items-start justify-center pt-1"
-            style={{ border: '1px solid rgba(255,255,255,0.2)' }}
+            style={{
+              position: 'absolute', width: '80%', height: '80%',
+              borderRadius: '50%',
+              background: 'radial-gradient(ellipse, rgba(108,71,255,0.25) 0%, transparent 70%)',
+              filter: 'blur(40px)',
+              pointerEvents: 'none',
+            }}
+          />
+          <div
+            ref={imgRef}
+            style={{
+              position: 'relative', zIndex: 1,
+              width: '100%', maxWidth: 580,
+              willChange: 'transform',
+              animation: 'float 6s ease-in-out infinite',
+            }}
           >
+            {/* Floating badges */}
             <div
-              className="w-1 h-2 rounded-full"
-              style={{ background: 'rgba(255,255,255,0.4)' }}
+              style={{
+                position: 'absolute', top: '10%', left: '-5%',
+                background: 'rgba(10,10,15,0.85)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(108,71,255,0.3)',
+                borderRadius: 14, padding: '0.75rem 1.25rem',
+                zIndex: 10, animation: 'float 4s ease-in-out infinite',
+                animationDelay: '0.5s',
+              }}
+            >
+              <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>Vendas hoje</p>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#00D4AA' }}>R$ 3.847,00</p>
+            </div>
+
+            <div
+              style={{
+                position: 'absolute', bottom: '15%', right: '-5%',
+                background: 'rgba(10,10,15,0.85)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(0,212,170,0.3)',
+                borderRadius: 14, padding: '0.75rem 1.25rem',
+                zIndex: 10, animation: 'float 5s ease-in-out infinite',
+                animationDelay: '1s',
+              }}
+            >
+              <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>Produtos ativos</p>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#6C47FF' }}>247 itens</p>
+            </div>
+
+            <div
+              style={{
+                position: 'absolute', top: '45%', right: '-8%',
+                background: 'rgba(10,10,15,0.85)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,107,71,0.3)',
+                borderRadius: 14, padding: '0.6rem 1rem',
+                zIndex: 10, animation: 'float 4.5s ease-in-out infinite',
+                animationDelay: '1.5s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
+                <p style={{ fontSize: '0.75rem', color: '#10B981', fontWeight: 700 }}>Garantia emitida</p>
+              </div>
+            </div>
+
+            <img
+              src="/hero-3d.png"
+              alt="KDL Store — sistema de gestão para lojistas"
+              style={{ width: '100%', height: 'auto', display: 'block', position: 'relative', zIndex: 2 }}
+              loading="eager"
             />
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Scroll indicator */}
+      <div
+        style={{
+          position: 'absolute', bottom: '2rem', left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+        }}
+      >
+        <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}>
+          Role para ver mais
+        </p>
+        <div
+          style={{
+            width: 20, height: 32, borderRadius: 10,
+            border: '1.5px solid rgba(255,255,255,0.15)',
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 4,
+          }}
+        >
+          <div
+            style={{
+              width: 4, height: 8, borderRadius: 2,
+              background: 'rgba(255,255,255,0.35)',
+              animation: 'scrollDot 1.8s ease-in-out infinite',
+            }}
+          />
+        </div>
+      </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .hero-grid { grid-template-columns: 1fr !important; padding-top: 6rem !important; }
+        }
+        @keyframes scrollDot {
+          0% { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(12px); opacity: 0; }
+        }
+      `}</style>
+    </section>
   );
 }
