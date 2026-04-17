@@ -119,13 +119,13 @@ importers:
   apps/store:
     dependencies:
       '@hookform/resolvers':
-        specifier: ^5.0.1
+        specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.4))
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.103.3)
       '@supabase/supabase-js':
-        specifier: ^2.49.4
+        specifier: ^2.103.3
         version: 2.103.3
       clsx:
         specifier: ^2.1.1
@@ -143,13 +143,13 @@ importers:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
       react-hook-form:
-        specifier: ^7.56.3
+        specifier: ^7.72.1
         version: 7.72.1(react@19.2.4)
       recharts:
-        specifier: ^2.15.3
+        specifier: ^2.15.4
         version: 2.15.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zod:
-        specifier: ^3.24.4
+        specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
       '@tailwindcss/postcss':
