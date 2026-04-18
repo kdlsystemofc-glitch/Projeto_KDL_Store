@@ -1,12 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
+
+const TOTAL_FRAMES = 40;
+
+function getFramePath(i: number) {
+  return `/frames/ezgif-frame-${String(i + 1).padStart(3, '0')}.jpg`;
+}
 
 export default function HeroScrollytelling() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [duration, setDuration] = useState(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(Array(TOTAL_FRAMES).fill(null));
+  const rafRef = useRef<number | null>(null);
 
   // Framer Motion: Acompanha o scroll apenas dentro deste container de 400vh
   const { scrollYProgress } = useScroll({
@@ -14,56 +21,96 @@ export default function HeroScrollytelling() {
     offset: ['start start', 'end end'],
   });
 
-  // Lida com o carregamento do vídeo para pegar a duração correta
+  // Preload das 40 imagens super leves em JPG
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleLoadedMetadata = () => setDuration(video.duration);
-    
-    // Se o vídeo já estiver pronto, pega a duração imediatamente
-    if (video.readyState >= 1) {
-      setDuration(video.duration);
-    } else {
-      video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    }
-
-    return () => video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    // Carrega o frame 0 primeiro para mostrar imediatamente
+    const firstImg = new Image();
+    firstImg.src = getFramePath(0);
+    firstImg.onload = () => {
+      imagesRef.current[0] = firstImg;
+      drawFrame(0);
+      
+      // Carrega o resto silenciosamente em background
+      for (let i = 1; i < TOTAL_FRAMES; i++) {
+        const img = new Image();
+        img.src = getFramePath(i);
+        img.onload = () => { imagesRef.current[i] = img; };
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Lógica principal: Sincroniza o tempo do vídeo com o scroll
-  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
-    if (!videoRef.current || duration === 0) return;
+  // Lógica principal: Desenha no canvas com Crossfade (Morphing) para não travar
+  const drawFrame = (progress: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     
-    // Calcula o tempo alvo (ex: 50% do scroll = 50% da duração do vídeo)
-    const targetTime = latest * duration;
+    // Calcula a posição exata (ex: 24.6)
+    const exactFrame = progress * (TOTAL_FRAMES - 1);
+    const frameIndex1 = Math.floor(exactFrame); // ex: 24
+    const frameIndex2 = Math.min(TOTAL_FRAMES - 1, frameIndex1 + 1); // ex: 25
+    const blendFactor = exactFrame - frameIndex1; // ex: 0.6 (60% de opacidade na imagem 2)
 
-    // requestAnimationFrame garante que a atualização ocorra no timing perfeito da tela (60fps/120fps)
-    requestAnimationFrame(() => {
-      if (videoRef.current) {
-        // Evita atualizações minúsculas para não engasgar o decodificador do navegador
-        if (Math.abs(videoRef.current.currentTime - targetTime) > 0.01) {
-          videoRef.current.currentTime = targetTime;
-        }
-      }
-    });
+    const img1 = imagesRef.current[frameIndex1] || imagesRef.current[0];
+    const img2 = imagesRef.current[frameIndex2];
+    
+    if (!img1) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Resolução interna do canvas = resolução da tela do celular/PC
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    // Lógica de "object-fit: cover"
+    const scale = Math.max(canvas.width / img1.width, canvas.height / img1.height);
+    const x = (canvas.width - img1.width * scale) / 2;
+    const y = (canvas.height - img1.height * scale) / 2;
+
+    // Limpa o frame anterior e pinta o fundo
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#0A0A0F";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Desenha a Imagem 1 (Frame atual)
+    ctx.globalAlpha = 1;
+    ctx.drawImage(img1, x, y, img1.width * scale, img1.height * scale);
+
+    // Aplica o "Crossfade" (Morphing) com a Imagem 2 para suavidade perfeita
+    if (img2 && blendFactor > 0) {
+      ctx.globalAlpha = blendFactor;
+      ctx.drawImage(img2, x, y, img2.width * scale, img2.height * scale);
+    }
+    
+    ctx.globalAlpha = 1; // reseta
+  };
+
+  // Sincroniza o Scroll com o Canvas (60fps)
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => drawFrame(latest));
   });
+
+  // Redesenha ao virar o celular ou redimensionar a tela
+  useEffect(() => {
+    const handleResize = () => drawFrame(scrollYProgress.get());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- ANIMAÇÕES DOS TEXTOS (Framer Motion) ---
 
-  // Seção 1 (0%): Aparece no início e some aos 15%
   const opacity1 = useTransform(scrollYProgress, [0, 0.05, 0.15], [1, 1, 0]);
   const y1 = useTransform(scrollYProgress, [0, 0.15], [0, -50]);
 
-  // Seção 2 (30%): Surge aos 20%, fica visível nos 30%, some aos 45%
   const opacity2 = useTransform(scrollYProgress, [0.2, 0.3, 0.35, 0.45], [0, 1, 1, 0]);
   const y2 = useTransform(scrollYProgress, [0.2, 0.3], [50, 0]);
 
-  // Seção 3 (60%): Surge aos 50%, fica visível nos 60%, some aos 75%
   const opacity3 = useTransform(scrollYProgress, [0.5, 0.6, 0.65, 0.75], [0, 1, 1, 0]);
   const y3 = useTransform(scrollYProgress, [0.5, 0.6], [50, 0]);
 
-  // Seção 4 (90%): Surge aos 80% e fica até o fim
   const opacity4 = useTransform(scrollYProgress, [0.8, 0.9, 1], [0, 1, 1]);
   const y4 = useTransform(scrollYProgress, [0.8, 0.9], [50, 0]);
 
@@ -73,16 +120,11 @@ export default function HeroScrollytelling() {
       className="relative w-full bg-[#0A0A0F]" 
       style={{ height: '400vh' }}
     >
-      {/* Container Fixo (Sticky) que prende o vídeo na tela enquanto rolamos */}
       <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center bg-[#0A0A0F]">
         
-        {/* O Vídeo HTML5 - Sem controles, mutado e com playsInline para iOS */}
-        <video
-          ref={videoRef}
-          src="/hero-video.mp4"
-          muted
-          playsInline
-          preload="auto"
+        {/* Canvas de Alta Performance que renderiza as imagens */}
+        <canvas
+          ref={canvasRef}
           className="absolute inset-0 w-full h-full object-cover"
         />
 
@@ -92,7 +134,6 @@ export default function HeroScrollytelling() {
         {/* --- CAMADAS DE TEXTO --- */}
         <div className="absolute inset-0 w-full max-w-7xl mx-auto px-6 md:px-12 pointer-events-none">
           
-          {/* SEÇÃO 1 - 0% */}
           <motion.div 
             style={{ opacity: opacity1, y: y1 }}
             className="absolute inset-0 flex flex-col items-center justify-center text-center mt-[-10vh]"
@@ -105,7 +146,6 @@ export default function HeroScrollytelling() {
             </h1>
           </motion.div>
 
-          {/* SEÇÃO 2 - 30% */}
           <motion.div 
             style={{ opacity: opacity2, y: y2 }}
             className="absolute inset-0 flex flex-col items-start justify-center max-w-xl"
@@ -122,7 +162,6 @@ export default function HeroScrollytelling() {
             </p>
           </motion.div>
 
-          {/* SEÇÃO 3 - 60% */}
           <motion.div 
             style={{ opacity: opacity3, y: y3 }}
             className="absolute inset-0 flex flex-col items-end justify-center text-right max-w-xl ml-auto"
@@ -139,7 +178,6 @@ export default function HeroScrollytelling() {
             </p>
           </motion.div>
 
-          {/* SEÇÃO 4 - 90% */}
           <motion.div 
             style={{ opacity: opacity4, y: y4 }}
             className="absolute inset-0 flex flex-col items-center justify-end pb-[15vh] text-center"
