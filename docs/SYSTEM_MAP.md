@@ -63,7 +63,7 @@
 
 ```
 apps/landing/
-├── public/frames/          # 240 frames da animação (ezgif-frame-001..240.png)
+├── public/               # hero-video.mp4 (5MB) substituiu os 240 frames PNG
 ├── src/app/
 │   ├── globals.css         # Design system com tokens CSS
 │   ├── layout.tsx          # Root layout + SEO + Google Fonts
@@ -80,11 +80,10 @@ apps/landing/
 ```
 
 ### Hero Animation
-- **Técnica:** Canvas Scrubbing — 240 PNGs em `/public/frames/`
-- **Frames:** Sequência `ezgif-frame-001..040.png` — substituída em 2026-04-18 por nova sequência de alta qualidade (originais em `/imagens/`)
-- **Scroll:** `container height = 3600px + viewportHeight`; frame = `floor(scrolled/3600 * 240)`
-- **SSR-safe:** `viewportHeight` estado inicializado via `useEffect`
-- **Loading:** Primeiro frame carregado imediatamente; demais em background com fallback para frame 0
+- **Técnica:** HTML5 Video Scrubbing (`/public/hero-video.mp4`)
+- **Performance:** Substituiu o antigo uso de canvas e centenas de imagens PNG por um único arquivo de 5MB, resultando em carregamento instantâneo e uso de memória drásticamente menor.
+- **Scroll:** `container height = 3600px + viewportHeight`; `video.currentTime = (scrolled/3600) * video.duration`
+- **Suavidade:** Atualização no `requestAnimationFrame` limitando a atualização de tempo apenas se a diferença for > 0.01s.
 
 ### Design System Tokens
 

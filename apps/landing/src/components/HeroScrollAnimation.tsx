@@ -2,19 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const TOTAL_FRAMES = 240;
-const SCROLL_PER_FRAME = 15; // px de scroll por frame
-const TOTAL_SCROLL = TOTAL_FRAMES * SCROLL_PER_FRAME;
-
-function getFramePath(i: number) {
-  return `/frames/ezgif-frame-${String(i + 1).padStart(3, '0')}.png`;
-}
+const TOTAL_SCROLL = 3600; // px de scroll para a animação completa
 
 export default function HeroScrollAnimation() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imagesRef = useRef<(HTMLImageElement | null)[]>(Array(TOTAL_FRAMES).fill(null));
-  const currentFrameRef = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
   const [viewportH, setViewportH] = useState(900);
 
@@ -25,74 +17,44 @@ export default function HeroScrollAnimation() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  function drawFrame(idx: number) {
-    const canvas = canvasRef.current;
-    const img = imagesRef.current[idx];
-    if (!canvas || !img) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    // Cover mode — preenche o canvas mantendo proporção
-    const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
-    const x = (canvas.width - img.width * scale) / 2;
-    const y = (canvas.height - img.height * scale) / 2;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-  }
-
-  // Carrega frame 0 imediatamente, depois o restante em background
+  // Preload do vídeo para garantir o scrubbing suave
   useEffect(() => {
-    const first = new Image();
-    first.src = getFramePath(0);
-    first.onload = () => {
-      imagesRef.current[0] = first;
-      drawFrame(0);
-      // Depois carrega os demais silenciosamente
-      for (let i = 1; i < TOTAL_FRAMES; i++) {
-        const img = new Image();
-        img.src = getFramePath(i);
-        img.onload = () => { imagesRef.current[i] = img; };
-        img.onerror = () => { imagesRef.current[i] = first; }; // fallback p/ frame 0
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Resize canvas ao redimensionar janela
-  useEffect(() => {
-    function resize() {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      drawFrame(currentFrameRef.current);
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+      video.preload = 'auto';
     }
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Scroll → frame
+  // Scroll -> controla o tempo do vídeo
   useEffect(() => {
     function onScroll() {
       const container = containerRef.current;
-      if (!container) return;
+      const video = videoRef.current;
+      if (!container || !video) return;
+
+      // Garante que o vídeo já carregou seus metadados
+      if (isNaN(video.duration) || video.duration === 0) return;
+
       const scrolled = -container.getBoundingClientRect().top;
       const progress = Math.max(0, Math.min(1, scrolled / TOTAL_SCROLL));
-      const target = Math.min(TOTAL_FRAMES - 1, Math.floor(progress * TOTAL_FRAMES));
-      if (target !== currentFrameRef.current) {
-        currentFrameRef.current = target;
-        if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(() => drawFrame(target));
-      }
+      
+      const targetTime = progress * video.duration;
+
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        // Atualiza apenas se a diferença for maior que 0.01s para evitar micro-engasgos
+        if (Math.abs(video.currentTime - targetTime) > 0.01) {
+          video.currentTime = targetTime;
+        }
+      });
     }
+
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', onScroll);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -103,10 +65,20 @@ export default function HeroScrollAnimation() {
       {/* Sticky viewport */}
       <div style={{ position: 'sticky', top: 0, width: '100%', height: '100vh', overflow: 'hidden' }}>
 
-        {/* Canvas — cena 3D animada pelo scroll */}
-        <canvas
-          ref={canvasRef}
-          style={{ display: 'block', width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+        {/* Video — cena 3D animada pelo scroll */}
+        <video
+          ref={videoRef}
+          src="/hero-video.mp4"
+          muted
+          playsInline
+          style={{ 
+            display: 'block', 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover',
+            position: 'absolute', 
+            inset: 0 
+          }}
         />
 
         {/* Gradiente sutil para legibilidade do texto (esquerda) */}
@@ -121,7 +93,7 @@ export default function HeroScrollAnimation() {
           background: 'linear-gradient(to bottom, rgba(245,244,255,0.6) 0%, transparent 100%)',
         }} />
 
-        {/* Hero content — esquerda inferior, igual ao etail.me */}
+        {/* Hero content — esquerda inferior */}
         <div style={{
           position: 'absolute', inset: 0,
           display: 'flex', alignItems: 'flex-end',
