@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 
-const TOTAL_FRAMES = 51;
+const TOTAL_FRAMES = 153;
 
 function getFramePath(i: number) {
   return `/frames/ezgif-frame-${String(i + 1).padStart(3, '0')}.jpg`;
