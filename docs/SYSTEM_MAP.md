@@ -1,7 +1,7 @@
 # KDL Store — System Map
 
 > **Documento vivo.** Atualizado a cada mudança significativa no código.
-> Última atualização: 2025-04-17 | Fase 4 Completa — Todos os módulos
+> Última atualização: 2026-04-18 | Fase 4 Completa — Todos os módulos | Hero frames substituídos por nova sequência de alta qualidade
 
 ---
 
@@ -81,9 +81,10 @@ apps/landing/
 
 ### Hero Animation
 - **Técnica:** Canvas Scrubbing — 40 PNGs em `/public/frames/`
+- **Frames:** Sequência `ezgif-frame-001..040.png` — substituída em 2026-04-18 por nova sequência de alta qualidade (originais em `/imagens/`)
 - **Scroll:** `container height = 2400px + viewportHeight`; frame = `floor(scrolled/2400 * 40)`
 - **SSR-safe:** `viewportHeight` estado inicializado via `useEffect`
-- **Loading:** Barra de progresso % até 100% das imagens carregadas
+- **Loading:** Primeiro frame carregado imediatamente; demais em background com fallback para frame 0
 
 ### Design System Tokens
 
