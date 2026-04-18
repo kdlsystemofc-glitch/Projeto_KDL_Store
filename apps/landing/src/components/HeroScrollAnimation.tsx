@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const TOTAL_FRAMES = 40;
-const SCROLL_PER_FRAME = 80; // px de scroll por frame
+const TOTAL_FRAMES = 240;
+const SCROLL_PER_FRAME = 15; // px de scroll por frame
 const TOTAL_SCROLL = TOTAL_FRAMES * SCROLL_PER_FRAME;
 
 function getFramePath(i: number) {

@@ -63,7 +63,7 @@
 
 ```
 apps/landing/
-├── public/frames/          # 40 frames da animação (ezgif-frame-001..040.png)
+├── public/frames/          # 240 frames da animação (ezgif-frame-001..240.png)
 ├── src/app/
 │   ├── globals.css         # Design system com tokens CSS
 │   ├── layout.tsx          # Root layout + SEO + Google Fonts
@@ -80,9 +80,9 @@ apps/landing/
 ```
 
 ### Hero Animation
-- **Técnica:** Canvas Scrubbing — 40 PNGs em `/public/frames/`
+- **Técnica:** Canvas Scrubbing — 240 PNGs em `/public/frames/`
 - **Frames:** Sequência `ezgif-frame-001..040.png` — substituída em 2026-04-18 por nova sequência de alta qualidade (originais em `/imagens/`)
-- **Scroll:** `container height = 2400px + viewportHeight`; frame = `floor(scrolled/2400 * 40)`
+- **Scroll:** `container height = 3600px + viewportHeight`; frame = `floor(scrolled/3600 * 240)`
 - **SSR-safe:** `viewportHeight` estado inicializado via `useEffect`
 - **Loading:** Primeiro frame carregado imediatamente; demais em background com fallback para frame 0
 
