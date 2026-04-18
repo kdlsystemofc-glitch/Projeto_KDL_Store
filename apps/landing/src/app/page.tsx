@@ -1,5 +1,5 @@
 import Navbar from '@/components/Navbar';
-import HeroScrollAnimation from '@/components/HeroScrollAnimation';
+import HeroScrollytelling from '@/components/HeroScrollytelling';
 import ProblemsSection from '@/components/ProblemsSection';
 import FeaturesSection from '@/components/FeaturesSection';
 import ForWhomSection from '@/components/ForWhomSection';
@@ -12,8 +12,8 @@ export default function Home() {
     <main style={{ background: 'var(--kdl-bg)' }}>
       <Navbar />
 
-      {/* Hero com scroll animation */}
-      <HeroScrollAnimation />
+      {/* Novo Hero Scrollytelling Awwwards-level */}
+      <HeroScrollytelling />
 
       {/* Seções de conteúdo */}
       <ProblemsSection />
