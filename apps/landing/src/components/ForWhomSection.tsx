@@ -17,40 +17,41 @@ const STORE_TYPES = [
 
 export default function ForWhomSection() {
   return (
-    <section id="paraquem" style={{ padding: '6rem 0', background: 'white' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem' }}>
+    <section id="paraquem" style={{ background: 'linear-gradient(180deg, #07060F 0%, #0D0B1A 100%)', padding: '7rem 0', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: 600, height: 600, background: 'radial-gradient(ellipse, rgba(108,71,255,0.1) 0%, transparent 65%)', pointerEvents: 'none' }} />
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
         <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
-          <div className="section-label" style={{ display: 'inline-flex' }}>
-            <span>🏪</span> Para quem é o KDL Store?
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(108,71,255,0.1)', border: '1px solid rgba(108,71,255,0.2)', borderRadius: 999, padding: '0.35rem 1rem', marginBottom: '1.5rem' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6C47FF', display: 'inline-block', boxShadow: '0 0 8px #6C47FF' }} />
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6C47FF' }}>Para quem é o KDL Store?</span>
           </div>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 900, marginBottom: '1rem', color: '#16113A' }}>
-            Funciona para{' '}
-            <span className="text-gradient">qualquer loja</span>
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.93)', marginBottom: '1.25rem' }}>
+            Se você tem uma loja,<br />
+            <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>o KDL Store é seu.</span>
           </h2>
-          <p style={{ fontSize: '1.05rem', color: '#6B6A8A', maxWidth: 520, margin: '0 auto', lineHeight: 1.65 }}>
-            Seja loja de som, moda ou utilidades — o sistema se adapta ao seu negócio.
-          </p>
+          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.4)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7, fontFamily: 'Inter, sans-serif' }}>Desenvolvido para o comércio varejista brasileiro em todas as suas formas.</p>
         </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '4rem' }}>
           {STORE_TYPES.map((type, i) => (
-            <div key={i} className="kdl-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: '0.75rem' }}>{type.icon}</div>
-              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.9rem', fontWeight: 700, color: '#16113A', marginBottom: '0.35rem' }}>{type.label}</h3>
-              <p style={{ fontSize: '0.78rem', color: '#A8A7C0', lineHeight: 1.5 }}>{type.desc}</p>
+            <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '1.5rem 1.25rem', textAlign: 'center', transition: 'border-color 0.3s, transform 0.3s, background 0.3s', cursor: 'default' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.borderColor = 'rgba(108,71,255,0.4)'; el.style.transform = 'translateY(-4px)'; el.style.background = 'rgba(108,71,255,0.06)'; }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.borderColor = 'rgba(255,255,255,0.07)'; el.style.transform = 'translateY(0)'; el.style.background = 'rgba(255,255,255,0.03)'; }}
+            >
+              <div style={{ fontSize: 30, marginBottom: '0.75rem', lineHeight: 1 }}>{type.icon}</div>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.9rem', fontWeight: 800, color: 'rgba(255,255,255,0.85)', marginBottom: '0.4rem' }}>{type.label}</h3>
+              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.55, fontFamily: 'Inter, sans-serif' }}>{type.desc}</p>
             </div>
           ))}
         </div>
-
-        <div style={{ textAlign: 'center', marginTop: '3.5rem' }}>
-          <p style={{ color: '#A8A7C0', marginBottom: '1.25rem', fontSize: '0.9rem' }}>
-            Não encontrou o seu segmento? O KDL Store funciona para qualquer tipo de comércio varejista.
+        <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: '3rem 2rem' }}>
+          <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.6rem', fontFamily: 'Inter, sans-serif' }}>Não encontrou o seu segmento?</p>
+          <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: 'rgba(255,255,255,0.88)', marginBottom: '2rem' }}>
+            O KDL Store funciona para{' '}
+            <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>qualquer comércio varejista.</span>
           </p>
-          <a href="#planos" className="btn-primary" id="forwhom-cta">
+          <a href="#planos" id="forwhom-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'linear-gradient(135deg, #6C47FF, #00C6A2)', color: 'white', fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '1rem', padding: '0.9rem 2.25rem', borderRadius: 999, textDecoration: 'none', boxShadow: '0 0 40px rgba(108,71,255,0.35)' }}>
             Experimentar agora
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
           </a>
         </div>
       </div>
