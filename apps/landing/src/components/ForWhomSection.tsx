@@ -1,157 +1,128 @@
 'use client';
 
-import { ScrollReveal, StaggerReveal, StaggerItem, ParallaxElement } from './ParallaxKit';
+import { ScrollReveal, StaggerReveal, StaggerItem } from './ParallaxKit';
 
 const STORE_TYPES = [
-  { icon: '👗', label: 'Moda e Roupas', desc: 'Grade de tamanhos, cores, controle por SKU', span: 'col-span-12 md:col-span-8', row: 'row-span-1', isLarge: true },
-  { icon: '📱', label: 'Eletrônicos', desc: 'Garantia por IMEI, OS de reparo, notas', span: 'col-span-12 md:col-span-4', row: 'row-span-2', isLarge: false },
-  { icon: '🏠', label: 'Utilidades', desc: 'Categorias e estoque múltiplo', span: 'col-span-12 md:col-span-4', row: 'row-span-1', isLarge: false },
-  { icon: '🍕', label: 'Alimentos', desc: 'Controle de validade e perecíveis', span: 'col-span-12 md:col-span-4', row: 'row-span-1', isLarge: false },
-  { icon: '🐾', label: 'Pet Shop', desc: 'Agendamentos e serviços', span: 'col-span-12 md:col-span-4', row: 'row-span-1', isLarge: false },
-  { icon: '🏪', label: 'Comércio Geral', desc: 'Adaptável a qualquer tipo de produto', span: 'col-span-12 md:col-span-8', row: 'row-span-1', isLarge: true },
+  { icon: '🔊', label: 'Som Automotivo', desc: 'PDV, OS de instalação, garantia de equipamentos' },
+  { icon: '👗', label: 'Moda e Roupas', desc: 'Grade de tamanhos, cores, controle por SKU' },
+  { icon: '🏠', label: 'Utilidades Domésticas', desc: 'Categorias, fornecedores, estoque múltiplo' },
+  { icon: '📱', label: 'Eletrônicos', desc: 'Garantia por IMEI, OS de reparo, notas' },
+  { icon: '💄', label: 'Beleza e Cosméticos', desc: 'Validade, lotes, programa de fidelidade' },
+  { icon: '🍕', label: 'Alimentos e Bebidas', desc: 'Controle de validade, estoque perecível' },
+  { icon: '⚒️', label: 'Ferramentas e Hardware', desc: 'Código de produto, fornecedores técnicos' },
+  { icon: '🧸', label: 'Brinquedos e Kids', desc: 'Garantias de produto, categorias por faixa etária' },
+  { icon: '🐾', label: 'Pet Shop', desc: 'Agendamento de serviços, produtos veterinários' },
+  { icon: '📚', label: 'Papelaria e Livraria', desc: 'Catálogo extenso, ISBN, fornecedores múltiplos' },
+  { icon: '🚲', label: 'Esportes e Lazer', desc: 'Estoque por tamanho, marcas, kits' },
+  { icon: '🏪', label: 'Comércio Geral', desc: 'Qualquer tipo de produto, adaptável' },
 ];
 
 export default function ForWhomSection() {
   return (
-    <section id="paraquem" style={{ background: '#0A0A0F', padding: '8rem 0', position: 'relative', overflow: 'hidden' }}>
-
-      {/* Grade decorativa inspirada no Dribbble */}
-      <ParallaxElement speed={0.15} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.5 }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-          backgroundSize: '100px 100px',
-        }} />
-      </ParallaxElement>
-
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
+    <section id="paraquem" style={{ background: '#fff', padding: '7rem 0', position: 'relative' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem' }}>
 
         {/* Header */}
-        <ScrollReveal direction="up" style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 100, padding: '0.4rem 1.25rem', marginBottom: '1.5rem', backdropFilter: 'blur(10px)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>Para quem é o KDL Store?</span>
+        <ScrollReveal direction="up">
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '5rem', flexWrap: 'wrap', gap: '2rem' }}>
+            <div>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1C3D2E', marginBottom: '1rem' }}>
+                Para quem é?
+              </p>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#111', maxWidth: 520 }}>
+                Se você tem uma loja,<br />
+                <em style={{ fontStyle: 'italic', color: '#1C3D2E' }}>o KDL Store é seu.</em>
+              </h2>
+            </div>
+            <p style={{ fontSize: '1rem', color: '#666', maxWidth: 340, lineHeight: 1.7, fontFamily: 'Inter, sans-serif', paddingTop: '3.5rem' }}>
+              Desenvolvido para o comércio varejista brasileiro em todas as suas formas e tamanhos.
+            </p>
           </div>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.95)', marginBottom: '1.5rem' }}>
-            Se você tem uma loja,<br />
-            <span style={{ 
-              fontFamily: 'Inter, serif', 
-              fontStyle: 'italic', 
-              fontWeight: 400,
-              color: 'rgba(255,255,255,0.6)',
-              marginRight: '8px'
-            }}>o KDL Store é</span>
-            <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>seu.</span>
-          </h2>
-          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.4)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>Desenvolvido para o comércio varejista brasileiro em todas as suas formas.</p>
         </ScrollReveal>
 
-        {/* Grid Bento staggered */}
-        <StaggerReveal style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(12, 1fr)', 
-          gap: '1.5rem', 
-          marginBottom: '5rem',
-          gridAutoRows: 'minmax(250px, auto)'
-        }}>
+        {/* Grid de segmentos — 4 colunas com borda fina separando */}
+        <StaggerReveal style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1px', background: '#E0DDD5', border: '1px solid #E0DDD5' }}>
           {STORE_TYPES.map((type, i) => (
-            <StaggerItem key={i} direction="up" className={`${type.span} ${type.row}`}>
+            <StaggerItem key={i} direction="up">
               <div
-                style={{ 
-                  background: 'rgba(255,255,255,0.02)', 
-                  border: '1px solid rgba(255,255,255,0.06)', 
-                  borderRadius: 32, 
-                  padding: type.isLarge ? '3rem' : '2.5rem', 
-                  textAlign: 'left', 
-                  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)', 
-                  cursor: 'default',
-                  height: '100%',
+                style={{
+                  background: '#fff',
+                  padding: '2rem 1.75rem',
                   display: 'flex',
-                  flexDirection: type.isLarge ? 'row' : 'column',
-                  alignItems: type.isLarge ? 'center' : 'flex-start',
-                  gap: type.isLarge ? '2.5rem' : '1.5rem',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  transition: 'background 0.25s ease',
+                  cursor: 'default',
+                  minHeight: 180,
                 }}
-                className="forwhom-card"
-                onMouseEnter={e => { 
-                  const el = e.currentTarget as HTMLDivElement; 
-                  el.style.borderColor = 'rgba(255,255,255,0.12)'; 
-                  el.style.transform = 'translateY(-4px)'; 
-                  el.style.background = 'rgba(255,255,255,0.04)'; 
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.background = '#E8EDE0';
                 }}
-                onMouseLeave={e => { 
-                  const el = e.currentTarget as HTMLDivElement; 
-                  el.style.borderColor = 'rgba(255,255,255,0.06)'; 
-                  el.style.transform = 'translateY(0)'; 
-                  el.style.background = 'rgba(255,255,255,0.02)'; 
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.background = '#fff';
                 }}
               >
-                {/* Glow decorativo */}
-                <div style={{ position: 'absolute', top: -50, right: -50, width: 150, height: 150, borderRadius: '50%', background: '#6C47FF', opacity: 0.05, filter: 'blur(40px)', pointerEvents: 'none' }} />
-
-                <div style={{ 
-                  width: 64, height: 64, borderRadius: 20,
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 32, flexShrink: 0,
-                  boxShadow: 'inset 0 0 20px rgba(255,255,255,0.02)'
-                }}>{type.icon}</div>
-                <div>
-                  <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: type.isLarge ? '1.5rem' : '1.25rem', fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: '0.6rem', letterSpacing: '-0.02em' }}>{type.label}</h3>
-                  <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>{type.desc}</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '1.75rem' }}>{type.icon}</span>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#ccc" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" /></svg>
                 </div>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1.15rem', fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
+                  {type.label}
+                </h3>
+                <p style={{ fontSize: '0.875rem', color: '#888', lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>
+                  {type.desc}
+                </p>
               </div>
             </StaggerItem>
           ))}
         </StaggerReveal>
 
-        {/* CTA CTA Frosted Glass */}
+        {/* CTA banner verde — igual ao vídeo */}
         <ScrollReveal direction="up" delay={0.1}>
-          <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 32, padding: '4rem 2rem', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 500, height: 500, background: 'radial-gradient(ellipse, rgba(108,71,255,0.1) 0%, transparent 60%)', pointerEvents: 'none' }} />
-            <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.75rem', fontFamily: 'Inter, sans-serif' }}>Não encontrou o seu segmento?</p>
-            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.75rem', color: 'rgba(255,255,255,0.95)', marginBottom: '2.5rem', letterSpacing: '-0.02em' }}>
-              O KDL Store funciona para{' '}
-              <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>qualquer comércio varejista.</span>
-            </p>
-            <a href="#planos" id="forwhom-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.95)', color: '#0A0A0F', fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '1rem', padding: '1rem 2.5rem', borderRadius: 100, textDecoration: 'none', transition: 'all 0.3s ease', boxShadow: '0 10px 40px rgba(255,255,255,0.1)' }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLAnchorElement;
-                el.style.transform = 'translateY(-2px)';
-                el.style.boxShadow = '0 15px 50px rgba(255,255,255,0.2)';
+          <div style={{
+            marginTop: '4rem',
+            background: '#1C3D2E',
+            borderRadius: 24,
+            padding: '3.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '2rem',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {/* Estrelas decorativas estilo Ascone */}
+            <div style={{ position: 'absolute', right: 40, top: 20, fontSize: '3rem', opacity: 0.15, color: 'white', userSelect: 'none' }}>✦ ✦</div>
+
+            <div>
+              <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.5rem', fontFamily: 'Inter, sans-serif' }}>Não encontrou seu segmento?</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'white', lineHeight: 1.2 }}>
+                O KDL Store funciona para{' '}
+                <em style={{ fontStyle: 'italic' }}>qualquer comércio varejista.</em>
+              </p>
+            </div>
+            <a
+              href="#planos"
+              id="forwhom-cta"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                background: 'white', color: '#1C3D2E',
+                fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem',
+                padding: '1rem 2.25rem', borderRadius: 999,
+                textDecoration: 'none', whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
               }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLAnchorElement;
-                el.style.transform = 'translateY(0)';
-                el.style.boxShadow = '0 10px 40px rgba(255,255,255,0.1)';
-              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#E8EDE0'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'white'; }}
             >
               Experimentar agora
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </a>
           </div>
         </ScrollReveal>
-
-        {/* Global Styles for Bento responsiveness */}
-        <style>{`
-          .col-span-12 { grid-column: span 12 / span 12; }
-          .row-span-1 { grid-row: span 1 / span 1; }
-          .row-span-2 { grid-row: span 2 / span 2; }
-          
-          @media (min-width: 768px) {
-            .md\\:col-span-4 { grid-column: span 4 / span 12; }
-            .md\\:col-span-8 { grid-column: span 8 / span 12; }
-          }
-          
-          @media (max-width: 767px) {
-            .forwhom-card {
-              flex-direction: column !important;
-              align-items: flex-start !important;
-              padding: 2rem !important;
-              gap: 1.5rem !important;
-            }
-          }
-        `}</style>
       </div>
     </section>
   );
