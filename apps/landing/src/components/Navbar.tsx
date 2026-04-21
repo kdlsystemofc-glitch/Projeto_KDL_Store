@@ -23,9 +23,9 @@ export default function Navbar() {
   return (
     <header style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-      background: scrolled ? 'rgba(245,244,255,0.92)' : 'transparent',
+      background: scrolled ? 'rgba(10, 10, 15, 0.8)' : 'transparent',
       backdropFilter: scrolled ? 'blur(20px)' : 'none',
-      borderBottom: scrolled ? '1px solid rgba(108,71,255,0.1)' : '1px solid transparent',
+      borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : '1px solid transparent',
       transition: 'all 0.3s ease',
     }}>
       <div style={{
@@ -41,8 +41,8 @@ export default function Navbar() {
             color: '#fff', fontWeight: 900, fontSize: 16, fontFamily: 'Outfit, sans-serif',
             boxShadow: '0 4px 14px rgba(108,71,255,0.3)',
           }}>K</div>
-          <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.15rem', color: '#16113A' }}>
-            KDL <span className="text-gradient">Store</span>
+          <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.15rem', color: 'rgba(255,255,255,0.9)' }}>
+            KDL <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Store</span>
           </span>
         </a>
 
@@ -50,11 +50,11 @@ export default function Navbar() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }} className="nav-desktop">
           {NAV_LINKS.map(link => (
             <a key={link.href} href={link.href} style={{
-              fontSize: '0.9rem', fontWeight: 500, color: '#6B6A8A',
+              fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)',
               textDecoration: 'none', transition: 'color 0.2s ease',
             }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#16113A')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#6B6A8A')}
+              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,1)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
             >
               {link.label}
             </a>
@@ -64,15 +64,15 @@ export default function Navbar() {
         {/* CTAs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }} className="nav-desktop">
           <a href={`${storeUrl}/login`} style={{
-            fontSize: '0.875rem', fontWeight: 500, color: '#6B6A8A',
+            fontSize: '0.875rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)',
             textDecoration: 'none', transition: 'color 0.2s ease',
           }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#16113A')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#6B6A8A')}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,1)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
           >
             Entrar
           </a>
-          <a href="#planos" className="btn-primary" style={{ padding: '0.6rem 1.3rem', fontSize: '0.875rem', borderRadius: 10 }}>
+          <a href="#planos" style={{ background: 'linear-gradient(135deg, #6C47FF, #00D4AA)', color: 'white', padding: '0.6rem 1.3rem', fontSize: '0.875rem', borderRadius: 100, textDecoration: 'none', fontWeight: 600 }}>
             Começar agora
           </a>
         </div>

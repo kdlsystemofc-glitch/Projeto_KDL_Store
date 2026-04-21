@@ -413,17 +413,38 @@ export default function HeroScrollytelling() {
         {/* Canvas principal (frames de scroll) */}
         <canvas ref={canvasRef} style={{ display: 'block', position: 'absolute', inset: 0 }} />
 
-        {/* Overlay gradiente */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent 55%, #0A0A0F 100%)' }} />
+        {/* Overlay gradiente para misturar com a próxima seção */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent 65%, #0A0A0F 100%)' }} />
 
         {/* Partículas luminosas — camada intermediária */}
         <ParticleLayer scrollYProgress={scrollYProgress} />
 
-        {/* Cards de storytelling lateral */}
-        <ScrollStories scrollYProgress={scrollYProgress} />
-
-        {/* Texto do hero — camada mais próxima */}
-        <HeroText scrollYProgress={scrollYProgress} />
+        {/* Scroll indicator - centralizado no bottom */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            bottom: '2.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            opacity: useTransform(scrollYProgress, [0, 0.05], [1, 0]),
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span style={{ fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}>
+            role para explorar
+          </span>
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.25)" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </motion.div>
+        </motion.div>
 
       </div>
     </div>
