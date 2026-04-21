@@ -1,6 +1,6 @@
 'use client';
 
-import { ScrollReveal, ParallaxElement } from './ParallaxKit';
+import { ScrollReveal, ParallaxElement, StaggerReveal, StaggerItem } from './ParallaxKit';
 
 export default function Footer() {
   const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || '';
