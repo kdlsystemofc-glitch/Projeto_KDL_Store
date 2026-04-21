@@ -79,7 +79,7 @@ export default function FeaturesSection() {
           display: 'grid', 
           gridTemplateColumns: 'repeat(12, 1fr)', 
           gap: '1.5rem',
-          autoRows: 'minmax(280px, auto)' 
+          gridAutoRows: 'minmax(280px, auto)' 
         }}>
           {FEATURES.map((f, i) => {
             const config = bentoConfig[i] || { span: 'col-span-12 md:col-span-4', row: 'row-span-1' };
