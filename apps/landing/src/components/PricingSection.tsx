@@ -35,15 +35,20 @@ export default function PricingSection() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
         {/* Header */}
         <ScrollReveal direction="up" style={{ textAlign: 'center', marginBottom: '5rem' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(108,71,255,0.1)', border: '1px solid rgba(108,71,255,0.2)', borderRadius: 999, padding: '0.35rem 1rem', marginBottom: '1.5rem' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6C47FF', display: 'inline-block', boxShadow: '0 0 8px #6C47FF' }} />
-            <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6C47FF' }}>Planos e preços</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 100, padding: '0.4rem 1.25rem', marginBottom: '1.5rem', backdropFilter: 'blur(10px)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>Planos e preços</span>
           </div>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.93)', marginBottom: '1.25rem' }}>
-            Simples,{' '}
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.95)', marginBottom: '1.5rem' }}>
+            <span style={{ 
+              fontFamily: 'Inter, serif', 
+              fontStyle: 'italic', 
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.6)',
+              marginRight: '8px'
+            }}>Simples e</span>
             <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>transparente.</span>
           </h2>
-          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.4)', maxWidth: 460, margin: '0 auto', lineHeight: 1.7, fontFamily: 'Inter, sans-serif' }}>Planos mensais, sem fidelidade e sem letras miúdas. Cancele quando quiser.</p>
+          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.4)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>Planos mensais, sem fidelidade e sem letras miúdas. Cancele quando quiser.</p>
         </ScrollReveal>
 
         {/* Cards */}
@@ -55,9 +60,9 @@ export default function PricingSection() {
               style={{
                 background: plan.popular
                   ? 'linear-gradient(145deg, #6C47FF 0%, #4F2FE8 100%)'
-                  : 'rgba(255,255,255,0.03)',
-                border: plan.popular ? 'none' : `1px solid rgba(255,255,255,0.08)`,
-                borderRadius: 24, padding: '2.25rem',
+                  : 'rgba(255,255,255,0.02)',
+                border: plan.popular ? 'none' : `1px solid rgba(255,255,255,0.06)`,
+                borderRadius: 32, padding: '2.5rem',
                 position: 'relative', overflow: 'hidden',
                 boxShadow: plan.popular ? '0 0 60px rgba(108,71,255,0.4)' : 'none',
                 transition: 'transform 0.25s ease',

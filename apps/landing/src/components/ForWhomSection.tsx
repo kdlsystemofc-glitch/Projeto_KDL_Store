@@ -30,29 +30,59 @@ export default function ForWhomSection() {
 
         {/* Header */}
         <ScrollReveal direction="up" style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(108,71,255,0.1)', border: '1px solid rgba(108,71,255,0.2)', borderRadius: 999, padding: '0.35rem 1rem', marginBottom: '1.5rem' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6C47FF', display: 'inline-block', boxShadow: '0 0 8px #6C47FF' }} />
-            <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6C47FF' }}>Para quem é o KDL Store?</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 100, padding: '0.4rem 1.25rem', marginBottom: '1.5rem', backdropFilter: 'blur(10px)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>Para quem é o KDL Store?</span>
           </div>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.93)', marginBottom: '1.25rem' }}>
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.95)', marginBottom: '1.5rem' }}>
             Se você tem uma loja,<br />
-            <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>o KDL Store é seu.</span>
+            <span style={{ 
+              fontFamily: 'Inter, serif', 
+              fontStyle: 'italic', 
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.6)',
+              marginRight: '8px'
+            }}>o KDL Store é</span>
+            <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>seu.</span>
           </h2>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.4)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>Desenvolvido para o comércio varejista brasileiro em todas as suas formas.</p>
         </ScrollReveal>
 
         {/* Grid staggered */}
-        <StaggerReveal style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '4rem' }}>
+        <StaggerReveal style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '5rem' }}>
           {STORE_TYPES.map((type, i) => (
             <StaggerItem key={i} direction="up">
               <div
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '1.5rem 1.25rem', textAlign: 'center', transition: 'border-color 0.3s, transform 0.3s, background 0.3s', cursor: 'default' }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.borderColor = 'rgba(108,71,255,0.4)'; el.style.transform = 'translateY(-5px)'; el.style.background = 'rgba(108,71,255,0.06)'; }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.borderColor = 'rgba(255,255,255,0.07)'; el.style.transform = 'translateY(0)'; el.style.background = 'rgba(255,255,255,0.03)'; }}
+                style={{ 
+                  background: 'rgba(255,255,255,0.02)', 
+                  border: '1px solid rgba(255,255,255,0.06)', 
+                  borderRadius: 32, 
+                  padding: '2rem 1.75rem', 
+                  textAlign: 'left', 
+                  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)', 
+                  cursor: 'default',
+                  height: '100%'
+                }}
+                onMouseEnter={e => { 
+                  const el = e.currentTarget as HTMLDivElement; 
+                  el.style.borderColor = 'rgba(255,255,255,0.12)'; 
+                  el.style.transform = 'translateY(-4px)'; 
+                  el.style.background = 'rgba(255,255,255,0.04)'; 
+                }}
+                onMouseLeave={e => { 
+                  const el = e.currentTarget as HTMLDivElement; 
+                  el.style.borderColor = 'rgba(255,255,255,0.06)'; 
+                  el.style.transform = 'translateY(0)'; 
+                  el.style.background = 'rgba(255,255,255,0.02)'; 
+                }}
               >
-                <div style={{ fontSize: 30, marginBottom: '0.75rem', lineHeight: 1 }}>{type.icon}</div>
-                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.9rem', fontWeight: 800, color: 'rgba(255,255,255,0.85)', marginBottom: '0.4rem' }}>{type.label}</h3>
-                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.55 }}>{type.desc}</p>
+                <div style={{ 
+                  width: 48, height: 48, borderRadius: 16,
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 24, marginBottom: '1.25rem' 
+                }}>{type.icon}</div>
+                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.15rem', fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: '0.6rem', letterSpacing: '-0.02em' }}>{type.label}</h3>
+                <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>{type.desc}</p>
               </div>
             </StaggerItem>
           ))}

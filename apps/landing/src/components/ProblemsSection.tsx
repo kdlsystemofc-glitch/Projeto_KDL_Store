@@ -80,23 +80,23 @@ export default function ProblemsSection() {
         <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: 'rgba(255,80,80,0.1)',
-            border: '1px solid rgba(255,80,80,0.25)',
-            borderRadius: 999, padding: '0.35rem 1rem',
+            background: 'rgba(255,80,80,0.05)',
+            border: '1px solid rgba(255,80,80,0.15)',
+            borderRadius: 100, padding: '0.4rem 1.25rem',
             marginBottom: '1.5rem',
+            backdropFilter: 'blur(10px)'
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF5050', display: 'inline-block', boxShadow: '0 0 8px #FF5050' }} />
-            <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#FF5050' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,80,80,0.9)' }}>
               A realidade do pequeno comércio
             </span>
           </div>
 
           <h2 style={{
             fontFamily: 'Outfit, sans-serif',
-            fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
-            fontWeight: 900,
+            fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+            fontWeight: 800,
             lineHeight: 1.1,
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.03em',
             color: 'rgba(255,255,255,0.93)',
             marginBottom: '1.25rem',
           }}>
@@ -131,25 +131,29 @@ export default function ProblemsSection() {
             <div
               key={p.number}
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: 20,
-                padding: '2rem',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 32,
+                padding: '2.5rem',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '1.25rem',
-                transition: 'border-color 0.3s, transform 0.3s',
+                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 cursor: 'default',
                 position: 'relative',
                 overflow: 'hidden',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLDivElement).style.borderColor = p.fixColor + '55';
-                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.borderColor = 'rgba(255,255,255,0.12)';
+                el.style.background = 'rgba(255,255,255,0.04)';
+                el.style.transform = 'translateY(-4px)';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)';
-                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.borderColor = 'rgba(255,255,255,0.06)';
+                el.style.background = 'rgba(255,255,255,0.02)';
+                el.style.transform = 'translateY(0)';
               }}
             >
               {/* Número grande de fundo decorativo */}
@@ -228,21 +232,22 @@ export default function ProblemsSection() {
             href="#funcionalidades"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 10,
-              background: 'linear-gradient(135deg, #6C47FF, #00C6A2)',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.15)',
               color: 'white', fontFamily: 'Inter, sans-serif',
-              fontWeight: 700, fontSize: '1rem',
-              padding: '0.9rem 2.25rem', borderRadius: 999,
+              fontWeight: 600, fontSize: '0.95rem',
+              padding: '0.9rem 2.5rem', borderRadius: 100,
               textDecoration: 'none',
-              boxShadow: '0 0 40px rgba(108,71,255,0.35)',
-              transition: 'transform 0.2s, box-shadow 0.2s',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.2s ease',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1.05)';
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 60px rgba(108,71,255,0.5)';
+              (e.currentTarget as HTMLAnchorElement).style.background = 'white';
+              (e.currentTarget as HTMLAnchorElement).style.color = '#0A0A0F';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)';
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 0 40px rgba(108,71,255,0.35)';
+              (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.05)';
+              (e.currentTarget as HTMLAnchorElement).style.color = 'white';
             }}
           >
             Ver como o KDL Store resolve
