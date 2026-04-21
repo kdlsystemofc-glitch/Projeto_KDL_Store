@@ -15,18 +15,21 @@ export default function Navbar() {
   const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || '';
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30);
+    const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // A navbar começa transparente sobre o hero escuro, e vira branca ao sair do hero
+  const isLight = scrolled;
+
   return (
     <header style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-      background: scrolled ? 'rgba(10, 10, 15, 0.8)' : 'transparent',
-      backdropFilter: scrolled ? 'blur(20px)' : 'none',
-      borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : '1px solid transparent',
-      transition: 'all 0.3s ease',
+      background: isLight ? 'rgba(255,255,255,0.95)' : 'transparent',
+      backdropFilter: isLight ? 'blur(20px)' : 'none',
+      borderBottom: isLight ? '1px solid #E0DDD5' : '1px solid transparent',
+      transition: 'all 0.4s ease',
     }}>
       <div style={{
         maxWidth: 1280, margin: '0 auto', padding: '0 2rem',
@@ -36,13 +39,12 @@ export default function Navbar() {
         <a href="/" id="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #6C47FF, #00C6A2)',
+            background: '#1C3D2E',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 900, fontSize: 16, fontFamily: 'Outfit, sans-serif',
-            boxShadow: '0 4px 14px rgba(108,71,255,0.3)',
+            color: '#fff', fontWeight: 700, fontSize: 16, fontFamily: 'Georgia, serif',
           }}>K</div>
-          <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.15rem', color: 'rgba(255,255,255,0.9)' }}>
-            KDL <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Store</span>
+          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: '1.15rem', color: isLight ? '#111' : 'rgba(255,255,255,0.95)' }}>
+            KDL <span style={{ color: '#1C3D2E' }}>Store</span>
           </span>
         </a>
 
@@ -50,11 +52,13 @@ export default function Navbar() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }} className="nav-desktop">
           {NAV_LINKS.map(link => (
             <a key={link.href} href={link.href} style={{
-              fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)',
+              fontSize: '0.9rem', fontWeight: 500,
+              color: isLight ? '#555' : 'rgba(255,255,255,0.7)',
               textDecoration: 'none', transition: 'color 0.2s ease',
+              fontFamily: 'Inter, sans-serif',
             }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,1)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+              onMouseEnter={e => (e.currentTarget.style.color = isLight ? '#111' : 'white')}
+              onMouseLeave={e => (e.currentTarget.style.color = isLight ? '#555' : 'rgba(255,255,255,0.7)')}
             >
               {link.label}
             </a>
@@ -64,22 +68,33 @@ export default function Navbar() {
         {/* CTAs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }} className="nav-desktop">
           <a href={`${storeUrl}/login`} style={{
-            fontSize: '0.875rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)',
+            fontSize: '0.875rem', fontWeight: 500,
+            color: isLight ? '#555' : 'rgba(255,255,255,0.7)',
             textDecoration: 'none', transition: 'color 0.2s ease',
+            fontFamily: 'Inter, sans-serif',
           }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,1)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+            onMouseEnter={e => (e.currentTarget.style.color = isLight ? '#111' : 'white')}
+            onMouseLeave={e => (e.currentTarget.style.color = isLight ? '#555' : 'rgba(255,255,255,0.7)')}
           >
             Entrar
           </a>
-          <a href="#planos" style={{ background: 'linear-gradient(135deg, #6C47FF, #00D4AA)', color: 'white', padding: '0.6rem 1.3rem', fontSize: '0.875rem', borderRadius: 100, textDecoration: 'none', fontWeight: 600 }}>
+          <a href="#planos" style={{
+            background: '#1C3D2E', color: 'white',
+            padding: '0.6rem 1.4rem', fontSize: '0.875rem',
+            borderRadius: 100, textDecoration: 'none',
+            fontWeight: 600, fontFamily: 'Inter, sans-serif',
+            transition: 'background 0.2s ease',
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#2A5C42'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#1C3D2E'; }}
+          >
             Começar agora
           </a>
         </div>
 
         {/* Mobile burger */}
         <button onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu"
-          style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: '#16113A', padding: 4 }}
+          style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: isLight ? '#111' : 'white', padding: 4 }}
           className="nav-mobile-btn">
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             {mobileOpen ? <path d="M6 18L18 6M6 6l12 12" /> : <path d="M3 12h18M3 6h18M3 18h18" />}
@@ -90,24 +105,30 @@ export default function Navbar() {
       {/* Mobile dropdown */}
       {mobileOpen && (
         <div style={{
-          background: 'rgba(245,244,255,0.98)', borderTop: '1px solid rgba(108,71,255,0.1)',
+          background: 'rgba(255,255,255,0.98)', borderTop: '1px solid #E0DDD5',
           padding: '1.5rem 2rem',
           backdropFilter: 'blur(20px)',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             {NAV_LINKS.map(link => (
               <a key={link.href} href={link.href} onClick={() => setMobileOpen(false)}
-                style={{ fontSize: '1rem', fontWeight: 500, color: '#6B6A8A', textDecoration: 'none' }}>
+                style={{ fontSize: '1rem', fontWeight: 500, color: '#555', textDecoration: 'none', fontFamily: 'Inter, sans-serif' }}>
                 {link.label}
               </a>
             ))}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <a href={`${storeUrl}/login`} style={{
-              textAlign: 'center', padding: '0.75rem', border: '1.5px solid rgba(22,17,58,0.1)',
-              borderRadius: 12, color: '#16113A', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
+              textAlign: 'center', padding: '0.75rem', border: '1px solid #E0DDD5',
+              borderRadius: 999, color: '#333', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
+              fontFamily: 'Inter, sans-serif',
             }}>Entrar</a>
-            <a href="#planos" className="btn-primary" onClick={() => setMobileOpen(false)} style={{ justifyContent: 'center' }}>
+            <a href="#planos" onClick={() => setMobileOpen(false)} style={{
+              textAlign: 'center', padding: '0.75rem',
+              background: '#1C3D2E', color: 'white',
+              borderRadius: 999, textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
+              fontFamily: 'Inter, sans-serif',
+            }}>
               Começar agora
             </a>
           </div>

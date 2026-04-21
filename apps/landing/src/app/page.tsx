@@ -6,17 +6,19 @@ import ForWhomSection from '@/components/ForWhomSection';
 import PricingSection from '@/components/PricingSection';
 import FAQSection from '@/components/FAQSection';
 import Footer from '@/components/Footer';
+import ParallaxBannerSection from '@/components/ParallaxBannerSection';
 
 export default function Home() {
   return (
-    <main style={{ background: 'var(--kdl-bg)' }}>
+    <main style={{ background: '#fff' }}>
       <Navbar />
 
-      {/* Novo Hero Scrollytelling Awwwards-level */}
+      {/* Hero — mantido no dark mode */}
       <HeroScrollytelling />
 
-      {/* Seções de conteúdo */}
+      {/* Conteúdo light mode — estilo Ascone */}
       <ProblemsSection />
+      <ParallaxBannerSection />
       <FeaturesSection />
       <ForWhomSection />
       <PricingSection />
