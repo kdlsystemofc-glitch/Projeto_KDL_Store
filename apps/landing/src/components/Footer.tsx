@@ -66,7 +66,6 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-            </div>
           </StaggerItem>
 
           {/* Produto */}

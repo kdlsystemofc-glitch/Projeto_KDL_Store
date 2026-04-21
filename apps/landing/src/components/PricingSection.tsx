@@ -108,6 +108,7 @@ export default function PricingSection() {
                   </div>
                 ))}
               </div>
+            </div>
             </StaggerItem>
           ))}
         </StaggerReveal>
