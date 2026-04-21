@@ -15,117 +15,180 @@ const FEATURES = [
 ];
 
 export default function FeaturesSection() {
-  return (
-    <section id="funcionalidades" style={{ background: '#07060F', padding: '7rem 0', position: 'relative', overflow: 'hidden' }}>
+  // Configuração Bento Grid: spans para colunas (base 12)
+  const bentoConfig = [
+    { span: 'col-span-12 md:col-span-8', row: 'row-span-2' }, // PDV (Maior)
+    { span: 'col-span-12 md:col-span-4', row: 'row-span-1' }, // Estoque
+    { span: 'col-span-12 md:col-span-4', row: 'row-span-1' }, // Garantia
+    { span: 'col-span-12 md:col-span-4', row: 'row-span-1' }, // Clientes
+    { span: 'col-span-12 md:col-span-4', row: 'row-span-1' }, // Fornecedores
+    { span: 'col-span-12 md:col-span-4', row: 'row-span-2' }, // OS (Vertical)
+    { span: 'col-span-12 md:col-span-8', row: 'row-span-1' }, // Financeiro (Largo)
+    { span: 'col-span-12 md:col-span-6', row: 'row-span-1' }, // Relatórios
+    { span: 'col-span-12 md:col-span-6', row: 'row-span-1' }, // Documento de venda
+  ];
 
-      {/* Grade decorativa — com parallax */}
-      <ParallaxElement speed={0.2} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+  return (
+    <section id="funcionalidades" style={{ background: '#07060F', padding: '8rem 0', position: 'relative', overflow: 'hidden' }}>
+
+      {/* Grade decorativa inspirada no Dribbble */}
+      <ParallaxElement speed={0.15} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.5 }}>
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'linear-gradient(rgba(108,71,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(108,71,255,0.05) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '100px 100px',
         }} />
       </ParallaxElement>
 
-      {/* Brilho — parallax mais lento que o grid */}
-      <ParallaxElement speed={0.4} style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>
-        <div style={{ width: 900, height: 500, background: 'radial-gradient(ellipse, rgba(0,198,162,0.1) 0%, transparent 65%)' }} />
-      </ParallaxElement>
+      <div style={{ maxWidth: 1300, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
-
-        {/* Header */}
+        {/* Header no estilo tipográfico Dribbble */}
         <ScrollReveal direction="up" style={{ textAlign: 'center', marginBottom: '5rem' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: 'rgba(0,198,162,0.1)', border: '1px solid rgba(0,198,162,0.2)',
-            borderRadius: 999, padding: '0.35rem 1rem', marginBottom: '1.5rem',
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 100, padding: '0.4rem 1.25rem', marginBottom: '1.5rem',
+            backdropFilter: 'blur(10px)'
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00C6A2', display: 'inline-block', boxShadow: '0 0 8px #00C6A2' }} />
-            <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#00C6A2' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>
               Módulos do sistema
             </span>
           </div>
           <h2 style={{
             fontFamily: 'Outfit, sans-serif',
-            fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
-            fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.02em',
-            color: 'rgba(255,255,255,0.93)', marginBottom: '1.25rem',
+            fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+            fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em',
+            color: 'rgba(255,255,255,0.95)', marginBottom: '1.5rem',
           }}>
-            Tudo que sua loja precisa,<br />
+            O controle perfeito para <br/>
+            <span style={{ 
+              fontFamily: 'Inter, serif', 
+              fontStyle: 'italic', 
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.6)',
+              marginRight: '8px'
+            }}>o futuro da</span>
             <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              em um só lugar.
+              sua loja
             </span>
           </h2>
-          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.4)', maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>
-            Cada módulo foi desenhado a partir das necessidades reais do pequeno comércio brasileiro.
-          </p>
         </ScrollReveal>
 
-        {/* Grid com stagger */}
-        <StaggerReveal style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1.25rem' }}>
-          {FEATURES.map((f, i) => (
-            <StaggerItem key={i} direction="up">
+        {/* Bento Grid */}
+        <StaggerReveal style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(12, 1fr)', 
+          gap: '1.5rem',
+          autoRows: 'minmax(280px, auto)' 
+        }}>
+          {FEATURES.map((f, i) => {
+            const config = bentoConfig[i] || { span: 'col-span-12 md:col-span-4', row: 'row-span-1' };
+            const isLarge = config.span.includes('col-span-8');
+            const isVertical = config.row.includes('row-span-2');
+            
+            return (
+            <StaggerItem key={i} direction="up" className={`${config.span} ${config.row}`}>
               <div
                 style={{
                   height: '100%',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                  borderRadius: 20, padding: '1.75rem',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 32, // Extremamente arredondado
+                  padding: isLarge ? '2.5rem' : '2rem',
                   position: 'relative', overflow: 'hidden',
-                  transition: 'border-color 0.3s, transform 0.3s, box-shadow 0.3s',
+                  display: 'flex',
+                  flexDirection: isLarge ? 'row' : 'column',
+                  gap: '2rem',
+                  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                   cursor: 'default',
                 }}
+                className="bento-card"
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = f.color + '55';
-                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)';
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 20px 60px ${f.color}18`;
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.background = 'rgba(255,255,255,0.04)';
+                  el.style.borderColor = 'rgba(255,255,255,0.12)';
+                  el.style.transform = 'translateY(-4px)';
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)';
-                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.background = 'rgba(255,255,255,0.02)';
+                  el.style.borderColor = 'rgba(255,255,255,0.06)';
+                  el.style.transform = 'translateY(0)';
                 }}
               >
-                {/* Glow corner */}
-                <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: f.color, opacity: 0.08, filter: 'blur(35px)', pointerEvents: 'none' }} />
+                {/* Glow subtle background */}
+                <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: f.color, opacity: 0.05, filter: 'blur(50px)', pointerEvents: 'none' }} />
 
-                {/* Imagem do Feature */}
-                {f.image ? (
+                {/* Conteúdo */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', zIndex: 1 }}>
                   <div style={{
-                    width: '100%', height: 180, borderRadius: 14, marginBottom: '1.25rem',
-                    overflow: 'hidden', position: 'relative', border: `1px solid ${f.color}30`
-                  }}>
-                    <img src={f.image} alt={f.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to top, rgba(10,10,15,1) 0%, rgba(10,10,15,0) 100%)` }} />
-                  </div>
-                ) : (
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 14,
-                    background: `${f.color}18`, border: `1px solid ${f.color}30`,
+                    width: 48, height: 48, borderRadius: 16,
+                    background: `${f.color}15`, border: `1px solid ${f.color}25`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 22, marginBottom: '1.25rem',
+                    fontSize: 22, marginBottom: '1.5rem', flexShrink: 0
                   }}>
                     {f.icon}
                   </div>
-                )}
 
-                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.1rem', fontWeight: 800, color: 'rgba(255,255,255,0.88)', marginBottom: '0.6rem' }}>{f.title}</h3>
-                <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, marginBottom: '1.25rem' }}>{f.description}</p>
+                  <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: isLarge ? '1.75rem' : '1.25rem', fontWeight: 800, color: 'rgba(255,255,255,0.95)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>{f.title}</h3>
+                  <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, marginBottom: '1.5rem', flex: 1 }}>{f.description}</p>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                  {f.tags.map(tag => (
-                    <span key={tag} style={{
-                      fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.65rem',
-                      borderRadius: 100, background: `${f.color}15`,
-                      color: f.color, border: `1px solid ${f.color}30`,
-                    }}>{tag}</span>
-                  ))}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: 'auto' }}>
+                    {f.tags.map(tag => (
+                      <span key={tag} style={{
+                        fontSize: '0.75rem', fontWeight: 600, padding: '0.3rem 0.8rem',
+                        borderRadius: 100, background: 'rgba(255,255,255,0.04)',
+                        color: 'rgba(255,255,255,0.6)', border: `1px solid rgba(255,255,255,0.08)`,
+                      }}>{tag}</span>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Imagem */}
+                {f.image && (
+                  <div style={{
+                    width: isLarge ? '50%' : '100%', 
+                    height: isLarge ? '100%' : (isVertical ? 250 : 160), 
+                    borderRadius: 20, 
+                    overflow: 'hidden', position: 'relative',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    marginTop: isLarge ? 0 : 'auto',
+                    flexShrink: 0
+                  }}>
+                    <img src={f.image} alt={f.title} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,10,15,0.8) 0%, transparent 50%)' }} />
+                  </div>
+                )}
               </div>
             </StaggerItem>
-          ))}
+            );
+          })}
         </StaggerReveal>
+
+        {/* Global Styles for Bento responsiveness */}
+        <style>{`
+          .col-span-12 { grid-column: span 12 / span 12; }
+          .row-span-1 { grid-row: span 1 / span 1; }
+          .row-span-2 { grid-row: span 2 / span 2; }
+          
+          @media (min-width: 768px) {
+            .md\\:col-span-4 { grid-column: span 4 / span 12; }
+            .md\\:col-span-6 { grid-column: span 6 / span 12; }
+            .md\\:col-span-8 { grid-column: span 8 / span 12; }
+          }
+          
+          @media (max-width: 767px) {
+            .bento-card {
+              flex-direction: column !important;
+              padding: 1.5rem !important;
+            }
+            .bento-card > div:last-child {
+              width: 100% !important;
+              height: 200px !important;
+              margin-top: 1.5rem !important;
+            }
+          }
+        `}</style>
       </div>
     </section>
   );
