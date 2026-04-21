@@ -69,7 +69,7 @@ export default function Footer() {
           </StaggerItem>
 
           {/* Produto */}
-          <StaggerItem direction="up" delay={0.1}>
+          <StaggerItem direction="up">
             <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', marginBottom: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Produto</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               {[['Funcionalidades', '#funcionalidades'], ['Planos', '#planos'], ['Para quem é?', '#paraquem'], ['FAQ', '#faq']].map(([label, href]) => (
@@ -84,7 +84,7 @@ export default function Footer() {
           </StaggerItem>
 
           {/* Legal */}
-          <StaggerItem direction="up" delay={0.2}>
+          <StaggerItem direction="up">
             <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', marginBottom: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Legal</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '1.5rem' }}>
               {['Termos de Uso', 'Política de Privacidade', 'Cookies'].map(item => (
