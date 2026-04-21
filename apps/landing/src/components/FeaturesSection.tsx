@@ -3,12 +3,12 @@
 import { ScrollReveal, StaggerReveal, StaggerItem, ParallaxElement } from './ParallaxKit';
 
 const FEATURES = [
-  { icon: '🛒', title: 'PDV Inteligente', description: 'Ponto de venda completo com busca por nome ou código, descontos, brindes, múltiplas formas de pagamento e parcelamento.', color: '#6C47FF', tags: ['Desconto', 'Brinde', 'Parcelamento'] },
-  { icon: '📦', title: 'Controle de Estoque', description: 'Estoque em tempo real com histórico de movimentações, alertas de mínimo, entrada e saída. Nunca mais venda o que não tem.', color: '#00C6A2', tags: ['Alerta', 'Histórico', 'Inventário'] },
+  { icon: '🛒', title: 'PDV Inteligente', description: 'Ponto de venda completo com busca por nome ou código, descontos, brindes, múltiplas formas de pagamento e parcelamento.', color: '#6C47FF', tags: ['Desconto', 'Brinde', 'Parcelamento'], image: '/features/pdv.jpg' },
+  { icon: '📦', title: 'Controle de Estoque', description: 'Estoque em tempo real com histórico de movimentações, alertas de mínimo, entrada e saída. Nunca mais venda o que não tem.', color: '#00C6A2', tags: ['Alerta', 'Histórico', 'Inventário'], image: '/features/estoque.jpg' },
   { icon: '🛡️', title: 'Garantia Digital', description: 'Certificado de garantia gerado automaticamente a cada venda. Código único e envio direto no WhatsApp do cliente.', color: '#FF6B47', tags: ['WhatsApp', 'QR Code', 'Automático'] },
-  { icon: '👥', title: 'Gestão de Clientes', description: 'Cadastro completo com histórico de compras, aniversário, CPF/CNPJ e observações internas.', color: '#F59E0B', tags: ['Histórico', 'Fidelidade', 'CRM'] },
+  { icon: '👥', title: 'Gestão de Clientes', description: 'Cadastro completo com histórico de compras, aniversário, CPF/CNPJ e observações internas.', color: '#F59E0B', tags: ['Histórico', 'Fidelidade', 'CRM'], image: '/features/clientes.jpg' },
   { icon: '🔗', title: 'Fornecedores', description: 'Cadastre fornecedores, registre pedidos e envie direto via WhatsApp. Estoque baixo pré-preenche o pedido.', color: '#3B82F6', tags: ['Pedidos', 'WhatsApp', 'Contatos'] },
-  { icon: '🔧', title: 'Ordens de Serviço', description: 'Kanban visual: orçamento → aprovado → em andamento → concluído → cobrado. Avance com 1 clique.', color: '#8B5CF6', tags: ['Kanban', 'Status', 'Instalação'] },
+  { icon: '🔧', title: 'Ordens de Serviço', description: 'Kanban visual: orçamento → aprovado → em andamento → concluído → cobrado. Avance com 1 clique.', color: '#8B5CF6', tags: ['Kanban', 'Status', 'Instalação'], image: '/features/os.jpg' },
   { icon: '💰', title: 'Financeiro Completo', description: 'Contas a pagar e receber, fluxo de caixa, DRE simplificado. Saiba exatamente quanto sua loja lucra.', color: '#10B981', tags: ['Fluxo de Caixa', 'DRE', 'Relatórios'] },
   { icon: '📊', title: 'Relatórios e Análises', description: 'Vendas por período com gráfico diário, top produtos, forma de pagamento e estoque crítico.', color: '#EC4899', tags: ['Gráficos', 'Exportar', 'Dashboard'] },
   { icon: '🧾', title: 'Documento de Venda', description: 'Comprovantes de venda em PDF com dados completos. Profissional e rastreável em qualquer momento.', color: '#F97316', tags: ['PDF', 'Profissional', 'Rastreável'] },
@@ -90,15 +90,25 @@ export default function FeaturesSection() {
                 {/* Glow corner */}
                 <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: f.color, opacity: 0.08, filter: 'blur(35px)', pointerEvents: 'none' }} />
 
-                {/* Ícone */}
-                <div style={{
-                  width: 48, height: 48, borderRadius: 14,
-                  background: `${f.color}18`, border: `1px solid ${f.color}30`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 22, marginBottom: '1.25rem',
-                }}>
-                  {f.icon}
-                </div>
+                {/* Imagem do Feature */}
+                {f.image ? (
+                  <div style={{
+                    width: '100%', height: 180, borderRadius: 14, marginBottom: '1.25rem',
+                    overflow: 'hidden', position: 'relative', border: `1px solid ${f.color}30`
+                  }}>
+                    <img src={f.image} alt={f.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to top, rgba(10,10,15,1) 0%, rgba(10,10,15,0) 100%)` }} />
+                  </div>
+                ) : (
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 14,
+                    background: `${f.color}18`, border: `1px solid ${f.color}30`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 22, marginBottom: '1.25rem',
+                  }}>
+                    {f.icon}
+                  </div>
+                )}
 
                 <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.1rem', fontWeight: 800, color: 'rgba(255,255,255,0.88)', marginBottom: '0.6rem' }}>{f.title}</h3>
                 <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, marginBottom: '1.25rem' }}>{f.description}</p>
