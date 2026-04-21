@@ -1,16 +1,21 @@
 'use client';
 
+import { ScrollReveal, ParallaxElement } from './ParallaxKit';
+
 export default function Footer() {
   const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || '';
 
   return (
     <footer style={{ background: '#07060F', color: 'rgba(255,255,255,0.85)', padding: '5rem 0 2.5rem', position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       {/* Brilho decorativo */}
-      <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: 700, height: 350, background: 'radial-gradient(ellipse, rgba(108,71,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <ParallaxElement speed={0.3} style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>
+        <div style={{ width: 700, height: 350, background: 'radial-gradient(ellipse, rgba(108,71,255,0.14) 0%, transparent 70%)' }} />
+      </ParallaxElement>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
 
-        {/* CTA final antes do footer */}
+        {/* CTA final */}
+        <ScrollReveal direction="up">
         <div style={{ textAlign: 'center', marginBottom: '5rem', padding: '3.5rem 2rem', background: 'linear-gradient(135deg, rgba(108,71,255,0.12), rgba(0,198,162,0.08))', border: '1px solid rgba(108,71,255,0.2)', borderRadius: 28 }}>
           <p style={{ fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6C47FF', marginBottom: '1rem', fontFamily: 'Inter, sans-serif' }}>
             ✦ Comece hoje
@@ -33,11 +38,12 @@ export default function Footer() {
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
           </a>
         </div>
+        </ScrollReveal>
 
         {/* Links */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '3rem', marginBottom: '3rem' }} className="footer-grid">
+        <StaggerReveal staggerDelay={0.15} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '3rem', marginBottom: '3rem' }} className="footer-grid">
           {/* Brand */}
-          <div>
+          <StaggerItem direction="up">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem' }}>
               <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg, #6C47FF, #00C6A2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 17, fontFamily: 'Outfit, sans-serif' }}>K</div>
               <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.1rem', color: 'rgba(255,255,255,0.9)' }}>
@@ -60,10 +66,11 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-          </div>
+            </div>
+          </StaggerItem>
 
           {/* Produto */}
-          <div>
+          <StaggerItem direction="up" delay={0.1}>
             <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', marginBottom: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Produto</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               {[['Funcionalidades', '#funcionalidades'], ['Planos', '#planos'], ['Para quem é?', '#paraquem'], ['FAQ', '#faq']].map(([label, href]) => (
@@ -75,10 +82,10 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </StaggerItem>
 
           {/* Legal */}
-          <div>
+          <StaggerItem direction="up" delay={0.2}>
             <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.4)', marginBottom: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Legal</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '1.5rem' }}>
               {['Termos de Uso', 'Política de Privacidade', 'Cookies'].map(item => (
@@ -91,10 +98,11 @@ export default function Footer() {
               ))}
             </ul>
             <a href={`${storeUrl}/login`} style={{ fontSize: '0.875rem', color: '#8B6FFF', textDecoration: 'none', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>Entrar na minha conta →</a>
-          </div>
-        </div>
+          </StaggerItem>
+        </StaggerReveal>
 
         {/* Bottom bar */}
+        <ScrollReveal direction="up" delay={0.3}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: '1rem' }}>
           <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.18)', fontFamily: 'Inter, sans-serif' }}>© 2025 KDL Store. Todos os direitos reservados.</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -102,6 +110,7 @@ export default function Footer() {
             <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.18)', fontFamily: 'Inter, sans-serif' }}>Sistema operacional</p>
           </div>
         </div>
+        </ScrollReveal>
       </div>
 
       <style>{`

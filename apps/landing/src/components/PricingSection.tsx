@@ -1,5 +1,7 @@
 'use client';
 
+import { ScrollReveal, StaggerReveal, StaggerItem, ParallaxElement } from './ParallaxKit';
+
 const PLANS = [
   {
     id: 'starter', name: 'Starter', price: '49,90', subtitle: 'Para quem está começando', popular: false,
@@ -26,11 +28,13 @@ export default function PricingSection() {
 
   return (
     <section id="planos" style={{ background: '#0A0A0F', padding: '7rem 0', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 500, background: 'radial-gradient(ellipse, rgba(108,71,255,0.1) 0%, transparent 65%)', pointerEvents: 'none' }} />
+      <ParallaxElement speed={0.3} style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>
+        <div style={{ width: 800, height: 500, background: 'radial-gradient(ellipse, rgba(108,71,255,0.1) 0%, transparent 65%)' }} />
+      </ParallaxElement>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
+        <ScrollReveal direction="up" style={{ textAlign: 'center', marginBottom: '5rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(108,71,255,0.1)', border: '1px solid rgba(108,71,255,0.2)', borderRadius: 999, padding: '0.35rem 1rem', marginBottom: '1.5rem' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6C47FF', display: 'inline-block', boxShadow: '0 0 8px #6C47FF' }} />
             <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6C47FF' }}>Planos e preços</span>
@@ -40,11 +44,12 @@ export default function PricingSection() {
             <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>transparente.</span>
           </h2>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.4)', maxWidth: 460, margin: '0 auto', lineHeight: 1.7, fontFamily: 'Inter, sans-serif' }}>Planos mensais, sem fidelidade e sem letras miúdas. Cancele quando quiser.</p>
-        </div>
+        </ScrollReveal>
 
         {/* Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+        <StaggerReveal style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
           {PLANS.map((plan) => (
+            <StaggerItem key={plan.id} direction="up">
             <div
               key={plan.id}
               style={{
@@ -103,16 +108,18 @@ export default function PricingSection() {
                   </div>
                 ))}
               </div>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerReveal>
 
         {/* Trust badges */}
+        <ScrollReveal direction="up" delay={0.2}>
         <div style={{ marginTop: '3.5rem', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
           {['💳 Cartão de crédito', '🔒 Pagamento seguro', '❌ Cancele quando quiser'].map(n => (
             <span key={n} style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'Inter, sans-serif' }}>{n}</span>
           ))}
         </div>
+        </ScrollReveal>
       </div>
     </section>
   );

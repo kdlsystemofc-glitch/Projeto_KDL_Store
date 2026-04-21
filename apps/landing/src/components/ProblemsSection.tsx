@@ -1,5 +1,7 @@
 'use client';
 
+import { ScrollReveal, StaggerReveal, StaggerItem, ParallaxBackground } from './ParallaxKit';
+
 const PROBLEMS = [
   {
     number: '01',
@@ -74,6 +76,7 @@ export default function ProblemsSection() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
 
         {/* HEADER */}
+        <ScrollReveal direction="up">
         <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -115,14 +118,16 @@ export default function ProblemsSection() {
             Criamos o KDL Store depois de ver de perto como pequenas lojas ainda sobrevivem no limite — e como isso não precisa ser assim.
           </p>
         </div>
+        </ScrollReveal>
 
         {/* GRID DE PROBLEMAS */}
-        <div style={{
+        <StaggerReveal style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
           gap: '1.5rem',
         }}>
           {PROBLEMS.map((p) => (
+            <StaggerItem key={p.number} direction="up">
             <div
               key={p.number}
               style={{
@@ -207,10 +212,11 @@ export default function ProblemsSection() {
                 </p>
               </div>
             </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerReveal>
 
-        {/* CTA CENTRAL */}
+        <ScrollReveal direction="up" delay={0.1}>
         <div style={{ textAlign: 'center', marginTop: '5rem' }}>
           <p style={{
             fontSize: '1.15rem', color: 'rgba(255,255,255,0.5)',
@@ -245,6 +251,7 @@ export default function ProblemsSection() {
             </svg>
           </a>
         </div>
+        </ScrollReveal>
 
       </div>
     </section>

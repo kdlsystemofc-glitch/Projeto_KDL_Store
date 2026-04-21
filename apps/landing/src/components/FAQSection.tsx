@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ScrollReveal, StaggerReveal, StaggerItem, ParallaxElement } from './ParallaxKit';
 
 const FAQS = [
   { q: 'Preciso instalar algum programa?', a: 'Não. O KDL Store é 100% web. Acesse pelo navegador de qualquer computador, tablet ou celular. Sem instalação, sem configuração.' },
@@ -18,11 +19,13 @@ export default function FAQSection() {
 
   return (
     <section id="faq" style={{ background: 'linear-gradient(180deg, #0A0A0F 0%, #0D0B1A 100%)', padding: '7rem 0', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '20%', left: '10%', width: 400, height: 400, background: 'radial-gradient(ellipse, rgba(0,198,162,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
+      <ParallaxElement speed={0.4} style={{ position: 'absolute', top: '20%', left: '10%', pointerEvents: 'none' }}>
+        <div style={{ width: 400, height: 400, background: 'radial-gradient(ellipse, rgba(0,198,162,0.08) 0%, transparent 65%)' }} />
+      </ParallaxElement>
 
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '0 2rem', position: 'relative' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <ScrollReveal direction="up" style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(0,198,162,0.1)', border: '1px solid rgba(0,198,162,0.2)', borderRadius: 999, padding: '0.35rem 1rem', marginBottom: '1.5rem' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00C6A2', display: 'inline-block', boxShadow: '0 0 8px #00C6A2' }} />
             <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#00C6A2' }}>Perguntas frequentes</span>
@@ -31,11 +34,12 @@ export default function FAQSection() {
             Suas dúvidas,{' '}
             <span style={{ background: 'linear-gradient(90deg, #6C47FF, #00C6A2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>respondidas.</span>
           </h2>
-        </div>
+        </ScrollReveal>
 
         {/* Accordion */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '3.5rem' }}>
+        <StaggerReveal style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '3.5rem' }}>
           {FAQS.map((faq, i) => (
+            <StaggerItem key={i} direction="up">
             <div
               key={i}
               style={{
@@ -64,10 +68,12 @@ export default function FAQSection() {
                 </div>
               )}
             </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerReveal>
 
         {/* Contact box */}
+        <ScrollReveal direction="up" delay={0.1}>
         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: '2.5rem', textAlign: 'center' }}>
           <p style={{ color: 'rgba(255,255,255,0.35)', marginBottom: '0.5rem', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif' }}>Ainda tem dúvidas?</p>
           <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, marginBottom: '1.75rem', color: 'rgba(255,255,255,0.88)', fontSize: '1.2rem' }}>Nossa equipe está pronta para ajudar.</p>
@@ -80,6 +86,7 @@ export default function FAQSection() {
             suporte@kdlstore.com.br
           </a>
         </div>
+        </ScrollReveal>
       </div>
     </section>
   );
