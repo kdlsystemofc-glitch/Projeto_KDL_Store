@@ -7,6 +7,17 @@ export default function HeroVideo() {
   const [useFallback, setUseFallback] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   useEffect(() => {
     // Check connection speed for fallback
     if ('connection' in navigator) {
@@ -17,12 +28,17 @@ export default function HeroVideo() {
     }
 
     // Attempt to play the video programmatically as a fallback for autoplay issues
-    if (videoRef.current && !useFallback) {
+    if (videoRef.current && !useFallback && !isMobile) {
       videoRef.current.play().catch((err) => {
         console.warn('Autoplay prevented or failed:', err);
       });
     }
-  }, [useFallback]);
+  }, [useFallback, isMobile]);
+
+  // Se for mobile, forçamos o fallback da imagem para evitar o botão de play do iOS
+  const showVideo = !useFallback && !isMobile;
+  // Desativar fixed (parallax) no mobile para evitar saltos (jitter) com a barra do navegador
+  const bgPosition = isMobile ? 'absolute' : 'fixed';
 
   return (
     <section style={{
@@ -34,22 +50,23 @@ export default function HeroVideo() {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 1, // Permite que a próxima seção role por cima do fixed background
+      overflow: 'hidden'
     }}>
-      {/* Background Media (Fixed para efeito parallax) */}
+      {/* Background Media */}
       <div style={{
-        position: 'fixed',
+        position: bgPosition,
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
         zIndex: 0,
-        ...(useFallback ? {
+        ...((!showVideo) ? {
           backgroundImage: 'url("/hero-poster.jpg")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         } : {})
       }}>
-        {!useFallback && (
+        {showVideo && (
           <video
             ref={videoRef}
             autoPlay
@@ -71,9 +88,9 @@ export default function HeroVideo() {
         )}
       </div>
 
-      {/* Dark Overlay Gradient (Bottom to Top) - Fixo como o vídeo */}
+      {/* Dark Overlay Gradient (Bottom to Top) */}
       <div style={{
-        position: 'fixed',
+        position: bgPosition,
         inset: 0,
         background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)',
         zIndex: 1,

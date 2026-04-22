@@ -160,8 +160,8 @@ export default function FeaturesSection() {
                         background: '#f8f9fa'
                       }}>
                         <img 
-                          src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=800&auto=format&fit=crop" 
-                          alt="Interface de PDV no Tablet" 
+                          src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=800&auto=format&fit=crop" 
+                          alt="Transação no balcão de vendas" 
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>
@@ -174,8 +174,8 @@ export default function FeaturesSection() {
                         background: '#f8f9fa'
                       }}>
                         <img 
-                          src="https://images.unsplash.com/photo-1507925922837-326f46a5c1f0?q=80&w=800&auto=format&fit=crop" 
-                          alt="Gestão de Ordens de Serviço" 
+                          src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop" 
+                          alt="Anotação de ordem de serviço" 
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>
