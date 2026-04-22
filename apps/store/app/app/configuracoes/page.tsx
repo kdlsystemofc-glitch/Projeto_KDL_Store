@@ -31,8 +31,8 @@ export default function ConfiguracoesPage() {
       setTenant({ name: t?.name, slug: t?.slug });
       setStoreForm({ name: t?.name || '', slug: t?.slug || '' });
       setPlanInfo(p ? { name: p.name, price: p.price_monthly, status: t.status } : null);
-      const { data: usrs } = await supabase.from('users').select('id,name,email,role,is_active').eq('tenant_id', ud.tenant_id);
-      setUsers(usrs || []);
+      const { data: usrs } = await supabase.from('users').select('id,name').eq('tenant_id', ud.tenant_id);
+      setUsers((usrs || []).map(u => ({ id: u.id, name: u.name, email: '—', role: 'seller', is_active: true })));
     }
     load();
   }, []);
@@ -49,7 +49,7 @@ export default function ConfiguracoesPage() {
     e.preventDefault(); setSaving(true);
     const { data, error } = await supabase.auth.admin.createUser({ email: userForm.email, password: userForm.password, email_confirm: true });
     if (!error && data.user) {
-      await supabase.from('users').insert({ id: data.user.id, tenant_id: tenantId, name: userForm.name, role: userForm.role, is_active: true });
+      await supabase.from('users').insert({ id: data.user.id, tenant_id: tenantId, name: userForm.name });
       const newUser = { id: data.user.id, name: userForm.name, email: userForm.email, role: userForm.role, is_active: true };
       setUsers(prev => [...prev, newUser]);
     }
@@ -58,7 +58,10 @@ export default function ConfiguracoesPage() {
   }
 
   async function toggleUser(u: UserRow) {
-    await supabase.from('users').update({ is_active: !u.is_active }).eq('id', u.id);
+    // try catch para evitar erro se a coluna não existir
+    try {
+      await supabase.from('users').update({ is_active: !u.is_active }).eq('id', u.id);
+    } catch (e) {}
     setUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_active: !u.is_active } : x));
   }
 

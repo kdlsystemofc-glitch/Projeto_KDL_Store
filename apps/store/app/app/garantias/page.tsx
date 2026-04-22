@@ -29,7 +29,7 @@ export default function GarantiasPage() {
       setTenantId(ud.tenant_id);
       const [w, p, c] = await Promise.all([
         supabase.from('warranties').select('*, products(name), customers(name,phone)').eq('tenant_id', ud.tenant_id).order('expiry_date'),
-        supabase.from('products').select('id,name,warranty_months').eq('tenant_id', ud.tenant_id).eq('is_active', true).order('name'),
+        supabase.from('products').select('id,name').eq('tenant_id', ud.tenant_id).eq('is_active', true).order('name'),
         supabase.from('customers').select('id,name,phone').eq('tenant_id', ud.tenant_id).order('name'),
       ]);
       setList(w.data || []);

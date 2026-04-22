@@ -64,10 +64,12 @@ export default function EstoquePage() {
     e.preventDefault();
     setSaving(true);
     if (editing) {
-      const { data } = await supabase.from('products').update({ ...form }).eq('id', editing.id).select().single();
+      const payload = { ...form, category_id: form.category_id || null };
+      const { data } = await supabase.from('products').update(payload).eq('id', editing.id).select().single();
       if (data) setProducts(prev => prev.map(p => p.id === data.id ? data : p));
     } else {
-      const { data } = await supabase.from('products').insert({ ...form, tenant_id: tenantId, is_active: true }).select().single();
+      const payload = { ...form, category_id: form.category_id || null };
+      const { data } = await supabase.from('products').insert({ ...payload, tenant_id: tenantId, is_active: true }).select().single();
       if (data) setProducts(prev => [...prev, data]);
     }
     setSaving(false);

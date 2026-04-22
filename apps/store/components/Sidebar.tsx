@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 const NAV = [
@@ -86,7 +87,7 @@ export default function Sidebar() {
             {section.items.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   id={`nav-${item.href.replace('/app/', '').replace('/', '-')}`}
@@ -94,7 +95,7 @@ export default function Sidebar() {
                 >
                   <span style={{ fontSize: '1rem' }}>{item.icon}</span>
                   <span>{item.label}</span>
-                </a>
+                </Link>
               );
             })}
           </div>
