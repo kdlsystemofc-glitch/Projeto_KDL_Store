@@ -25,6 +25,11 @@ export default function EstoquePage() {
   const [movType, setMovType] = useState<'entry' | 'adjustment' | 'loss'>('entry');
   const [movQty, setMovQty] = useState(1);
   const [movReason, setMovReason] = useState('');
+  
+  // States for Categories
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [savingCat, setSavingCat] = useState(false);
 
   const [form, setForm] = useState({
     name: '', sku: '', category_id: '', cost_price: 0, sale_price: 0,
@@ -74,6 +79,20 @@ export default function EstoquePage() {
     }
     setSaving(false);
     setShowModal(false);
+  }
+
+  async function saveCategory(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    setSavingCat(true);
+    const { data } = await supabase.from('categories').insert({ name: newCatName.trim(), tenant_id: tenantId }).select().single();
+    if (data) {
+      setCategories(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setForm(f => ({ ...f, category_id: data.id }));
+    }
+    setSavingCat(false);
+    setShowCatModal(false);
+    setNewCatName('');
   }
 
   async function saveMovement() {
@@ -202,7 +221,10 @@ export default function EstoquePage() {
                   <input id="prod-sku" type="text" className="form-input" value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} placeholder="Ex: RAD-001" />
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="prod-cat">Categoria</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <label className="form-label" htmlFor="prod-cat" style={{ margin: 0 }}>Categoria</label>
+                    <button type="button" onClick={() => setShowCatModal(true)} style={{ background: 'none', border: 'none', color: 'var(--kdl-primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>+ Nova</button>
+                  </div>
                   <select id="prod-cat" className="form-select" value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}>
                     <option value="">Sem categoria</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -281,6 +303,27 @@ export default function EstoquePage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category modal */}
+      {showCatModal && (
+        <div className="modal-overlay" onClick={() => setShowCatModal(false)} style={{ zIndex: 100 }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '1.5rem', fontSize: '1.25rem' }}>Nova Categoria</h2>
+            <form onSubmit={saveCategory} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="cat-name">Nome da Categoria *</label>
+                <input id="cat-name" type="text" className="form-input" value={newCatName} onChange={e => setNewCatName(e.target.value)} required placeholder="Ex: Som Automotivo" autoFocus />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowCatModal(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={savingCat}>
+                  {savingCat ? 'Salvando...' : 'Criar Categoria'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

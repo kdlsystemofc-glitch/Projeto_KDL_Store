@@ -39,9 +39,9 @@ export default function RelatoriosPage() {
       const end   = new Date(y, m, 0, 23, 59, 59).toISOString();
       const [s, si, p, c, os, pay] = await Promise.all([
         supabase.from('sales').select('id,total,payment_method,created_at,customers(name)').eq('tenant_id', tenantId).gte('created_at', start).lte('created_at', end).eq('status', 'completed').order('created_at', { ascending: false }),
-        supabase.from('sale_items').select('qty,unit_price,discount,products(name)').eq('tenant_id', tenantId).gte('created_at', start).lte('created_at', end).limit(500),
+        supabase.from('sale_items').select('qty,unit_price,discount,product_id').eq('tenant_id', tenantId).gte('created_at', start).lte('created_at', end).limit(500),
         supabase.from('products').select('id,name,stock_qty,min_stock,cost_price,sale_price,is_active').eq('tenant_id', tenantId),
-        Promise.resolve({ data: [] }), // Ignorando categories por agora para não quebrar
+        Promise.resolve({ data: [] }), // Ignorando categories por agora
         supabase.from('service_orders').select('id,status,price,created_at,completed_at,customers(name)').eq('tenant_id', tenantId),
         supabase.from('accounts_payable').select('amount,status,category,due_date').eq('tenant_id', tenantId).gte('due_date', start.split('T')[0]).lte('due_date', end.split('T')[0]),
       ]);
@@ -72,7 +72,8 @@ export default function RelatoriosPage() {
   // Top produtos
   const itemTotals: Record<string, { name: string; qty: number; rev: number }> = {};
   for (const i of saleItems) {
-    const name = (i.products as any)?.name || '?';
+    const pInfo = products.find(p => p.id === i.product_id);
+    const name = pInfo ? pInfo.name : 'Produto Excluído';
     if (!itemTotals[name]) itemTotals[name] = { name, qty: 0, rev: 0 };
     itemTotals[name].qty += i.qty;
     itemTotals[name].rev += (i.unit_price * i.qty) - i.discount;
