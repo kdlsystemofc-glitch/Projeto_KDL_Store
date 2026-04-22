@@ -17,13 +17,15 @@ export default function Home() {
       <HeroVideo />
 
       {/* Conteúdo light mode — estilo Ascone */}
-      <ProblemsSection />
-      <ParallaxBannerSection />
-      <FeaturesSection />
-      <ForWhomSection />
-      <PricingSection />
-      <FAQSection />
-      <Footer />
+      <div style={{ position: 'relative', zIndex: 2, background: '#fff' }}>
+        <ProblemsSection />
+        <ParallaxBannerSection />
+        <FeaturesSection />
+        <ForWhomSection />
+        <PricingSection />
+        <FAQSection />
+        <Footer />
+      </div>
     </main>
   );
 }
