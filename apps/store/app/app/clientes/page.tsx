@@ -48,11 +48,14 @@ export default function ClientesPage() {
     e.preventDefault();
     if (!form.name.trim()) return;
     setSaving(true);
+    const payload: any = { ...form };
+    Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
+    
     if (editing) {
-      const { data } = await supabase.from('customers').update(form).eq('id', editing.id).select().single();
+      const { data } = await supabase.from('customers').update(payload).eq('id', editing.id).select().single();
       if (data) setCustomers(prev => prev.map(c => c.id === data.id ? data : c));
     } else {
-      const { data } = await supabase.from('customers').insert({ ...form, tenant_id: tenantId }).select().single();
+      const { data } = await supabase.from('customers').insert({ ...payload, tenant_id: tenantId }).select().single();
       if (data) setCustomers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
     }
     setSaving(false); setShowModal(false);

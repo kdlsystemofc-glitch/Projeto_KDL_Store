@@ -37,15 +37,16 @@ export default function RelatoriosPage() {
       const [y, m] = period.split('-').map(Number);
       const start = new Date(y, m - 1, 1).toISOString();
       const end   = new Date(y, m, 0, 23, 59, 59).toISOString();
-      const [s, si, p, c, os, pay] = await Promise.all([
-        supabase.from('sales').select('id,total,payment_method,created_at,customers(name)').eq('tenant_id', tenantId).gte('created_at', start).lte('created_at', end).eq('status', 'completed').order('created_at', { ascending: false }),
-        supabase.from('sale_items').select('qty,unit_price,discount,product_id').eq('tenant_id', tenantId).gte('created_at', start).lte('created_at', end).limit(500),
+      const [s, p, c, os, pay] = await Promise.all([
+        supabase.from('sales').select('id,total,payment_method,created_at,customers(name),sale_items(qty,unit_price,discount,product_id)').eq('tenant_id', tenantId).gte('created_at', start).lte('created_at', end).eq('status', 'completed').order('created_at', { ascending: false }),
         supabase.from('products').select('id,name,stock_qty,min_stock,cost_price,sale_price,is_active').eq('tenant_id', tenantId),
         Promise.resolve({ data: [] }), // Ignorando categories por agora
         supabase.from('service_orders').select('id,status,price,created_at,completed_at,customers(name)').eq('tenant_id', tenantId),
         supabase.from('accounts_payable').select('amount,status,category,due_date').eq('tenant_id', tenantId).gte('due_date', start.split('T')[0]).lte('due_date', end.split('T')[0]),
       ]);
-      setSales(s.data || []); setSaleItems(si.data || []);
+      const salesData = s.data || [];
+      const extractedSaleItems = salesData.flatMap(sale => sale.sale_items || []);
+      setSales(salesData); setSaleItems(extractedSaleItems);
       setProducts(p.data || []); setCategories(c.data || []);
       setOsData(os.data || []); setPayables(pay.data || []);
       setLoading(false);
