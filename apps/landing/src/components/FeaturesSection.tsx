@@ -157,45 +157,13 @@ export default function FeaturesSection() {
                       <div style={{
                         width: '100%', height: 160, borderRadius: 12, overflow: 'hidden',
                         marginBottom: '1.5rem', flexShrink: 0,
-                        background: '#f8f9fa', border: '1px solid rgba(255,255,255,0.1)',
-                        display: 'flex', position: 'relative'
+                        background: '#f8f9fa'
                       }}>
-                        {/* Sidebar Esq */}
-                        <div style={{ width: '20%', background: '#fff', borderRight: '1px solid #eee', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ height: 6, width: '60%', background: '#1C3D2E', borderRadius: 4, marginBottom: '0.5rem' }} />
-                          <div style={{ height: 4, width: '80%', background: '#e9ecef', borderRadius: 2 }} />
-                          <div style={{ height: 4, width: '70%', background: '#e9ecef', borderRadius: 2 }} />
-                          <div style={{ height: 4, width: '80%', background: '#e9ecef', borderRadius: 2 }} />
-                        </div>
-                        {/* Grid Produtos Centro */}
-                        <div style={{ flex: 1, padding: '0.5rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', alignContent: 'start' }}>
-                          {[...Array(6)].map((_, idx) => (
-                            <div key={idx} style={{ background: '#fff', borderRadius: 6, padding: '0.25rem', border: '1px solid #eee' }}>
-                              <div style={{ height: 24, background: '#e9ecef', borderRadius: 4, marginBottom: '0.25rem' }} />
-                              <div style={{ height: 3, width: '60%', background: '#dee2e6', borderRadius: 2, marginBottom: '0.15rem' }} />
-                              <div style={{ height: 3, width: '40%', background: '#1C3D2E', borderRadius: 2 }} />
-                            </div>
-                          ))}
-                        </div>
-                        {/* Carrinho Dir */}
-                        <div style={{ width: '25%', background: '#fff', borderLeft: '1px solid #eee', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ height: 5, width: '50%', background: '#343a40', borderRadius: 2, marginBottom: '0.5rem' }} />
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                            <div style={{ height: 3, width: '40%', background: '#dee2e6', borderRadius: 2 }} />
-                            <div style={{ height: 3, width: '20%', background: '#dee2e6', borderRadius: 2 }} />
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <div style={{ height: 3, width: '50%', background: '#dee2e6', borderRadius: 2 }} />
-                            <div style={{ height: 3, width: '20%', background: '#dee2e6', borderRadius: 2 }} />
-                          </div>
-                          <div style={{ borderTop: '1px dashed #dee2e6', paddingTop: '0.5rem', marginTop: 'auto' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                              <div style={{ height: 4, width: '30%', background: '#343a40', borderRadius: 2 }} />
-                              <div style={{ height: 4, width: '30%', background: '#1C3D2E', borderRadius: 2 }} />
-                            </div>
-                            <div style={{ height: 16, background: '#1C3D2E', borderRadius: 4, width: '100%' }} />
-                          </div>
-                        </div>
+                        <img 
+                          src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=800&auto=format&fit=crop" 
+                          alt="Interface de PDV no Tablet" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
                     )}
                     {/* Mockup UI para card OS */}
@@ -203,43 +171,13 @@ export default function FeaturesSection() {
                       <div style={{
                         width: '100%', height: 140, borderRadius: 12, overflow: 'hidden',
                         marginBottom: '1.5rem', flexShrink: 0,
-                        background: '#f8f9fa', border: '1px solid rgba(255,255,255,0.1)',
-                        display: 'flex', gap: '0.5rem', padding: '0.5rem'
+                        background: '#f8f9fa'
                       }}>
-                        {/* Coluna 1 Kanban */}
-                        <div style={{ flex: 1, background: '#e9ecef', borderRadius: 6, padding: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ height: 4, width: '40%', background: '#adb5bd', borderRadius: 2, margin: '0.15rem 0' }} />
-                          <div style={{ background: '#fff', padding: '0.35rem', borderRadius: 4, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                            <div style={{ height: 3, width: '30%', background: '#ffc107', borderRadius: 2, marginBottom: '0.25rem' }} />
-                            <div style={{ height: 3, width: '80%', background: '#dee2e6', borderRadius: 2, marginBottom: '0.15rem' }} />
-                            <div style={{ height: 3, width: '60%', background: '#dee2e6', borderRadius: 2 }} />
-                          </div>
-                          <div style={{ background: '#fff', padding: '0.35rem', borderRadius: 4, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                            <div style={{ height: 3, width: '30%', background: '#17a2b8', borderRadius: 2, marginBottom: '0.25rem' }} />
-                            <div style={{ height: 3, width: '70%', background: '#dee2e6', borderRadius: 2 }} />
-                          </div>
-                        </div>
-                        {/* Coluna 2 Kanban */}
-                        <div style={{ flex: 1, background: '#e9ecef', borderRadius: 6, padding: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ height: 4, width: '50%', background: '#adb5bd', borderRadius: 2, margin: '0.15rem 0' }} />
-                          <div style={{ background: '#fff', padding: '0.35rem', borderRadius: 4, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                            <div style={{ height: 3, width: '30%', background: '#007bff', borderRadius: 2, marginBottom: '0.25rem' }} />
-                            <div style={{ height: 3, width: '90%', background: '#dee2e6', borderRadius: 2, marginBottom: '0.15rem' }} />
-                            <div style={{ height: 3, width: '50%', background: '#dee2e6', borderRadius: 2 }} />
-                          </div>
-                        </div>
-                        {/* Coluna 3 Kanban */}
-                        <div style={{ flex: 1, background: '#e9ecef', borderRadius: 6, padding: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ height: 4, width: '45%', background: '#adb5bd', borderRadius: 2, margin: '0.15rem 0' }} />
-                          <div style={{ background: '#fff', padding: '0.35rem', borderRadius: 4, opacity: 0.7 }}>
-                            <div style={{ height: 3, width: '30%', background: '#28a745', borderRadius: 2, marginBottom: '0.25rem' }} />
-                            <div style={{ height: 3, width: '60%', background: '#dee2e6', borderRadius: 2 }} />
-                          </div>
-                          <div style={{ background: '#fff', padding: '0.35rem', borderRadius: 4, opacity: 0.7 }}>
-                            <div style={{ height: 3, width: '30%', background: '#28a745', borderRadius: 2, marginBottom: '0.25rem' }} />
-                            <div style={{ height: 3, width: '80%', background: '#dee2e6', borderRadius: 2 }} />
-                          </div>
-                        </div>
+                        <img 
+                          src="https://images.unsplash.com/photo-1507925922837-326f46a5c1f0?q=80&w=800&auto=format&fit=crop" 
+                          alt="Gestão de Ordens de Serviço" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
                     )}
 

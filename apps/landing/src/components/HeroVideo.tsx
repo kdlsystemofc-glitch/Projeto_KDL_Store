@@ -60,7 +60,8 @@ export default function HeroVideo() {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              display: 'block'
+              display: 'block',
+              pointerEvents: 'none'
             }}
             poster="/hero-poster.jpg"
           >
