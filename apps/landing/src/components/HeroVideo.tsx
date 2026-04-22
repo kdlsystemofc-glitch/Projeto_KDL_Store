@@ -44,7 +44,7 @@ export default function HeroVideo() {
         height: '100%',
         zIndex: 0,
         ...(useFallback ? {
-          backgroundImage: 'url("https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2000&auto=format&fit=crop")',
+          backgroundImage: 'url("/hero-poster.jpg")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         } : {})
@@ -62,7 +62,7 @@ export default function HeroVideo() {
               objectFit: 'cover',
               display: 'block'
             }}
-            poster="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2000&auto=format&fit=crop"
+            poster="/hero-poster.jpg"
           >
             <source src="/hero.webm" type="video/webm" />
             <source src="/hero.mp4" type="video/mp4" />
