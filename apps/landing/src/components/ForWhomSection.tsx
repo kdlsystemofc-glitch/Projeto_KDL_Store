@@ -104,26 +104,50 @@ export default function ForWhomSection() {
                 <em style={{ fontStyle: 'italic' }}>qualquer comércio varejista.</em>
               </p>
             </div>
-            <a
-              href="#planos"
-              id="forwhom-cta"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 10,
-                background: 'white', color: '#1C3D2E',
-                fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem',
-                padding: '1rem 2.25rem', borderRadius: 999,
-                textDecoration: 'none', whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#E8EDE0'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'white'; }}
-            >
-              Experimentar agora
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-            </a>
+
+            {/* Imagem real decorativa do lado direito do banner */}
+            <div style={{
+              width: 240, height: 160, borderRadius: 16, overflow: 'hidden',
+              flexShrink: 0, boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              border: '2px solid rgba(255,255,255,0.1)',
+            }} className="forwhom-cta-img">
+              <img
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=600&auto=format&fit=crop"
+                alt="Loja organizada"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+
+            <div style={{ flex: '1 1 100%', display: 'flex', justifyContent: 'flex-start' }} className="forwhom-btn-container">
+              <a
+                href="#planos"
+                id="forwhom-cta"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 10,
+                  background: 'white', color: '#1C3D2E',
+                  fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.95rem',
+                  padding: '1rem 2.25rem', borderRadius: 999,
+                  textDecoration: 'none', whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease',
+                  marginTop: '0.5rem'
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#E8EDE0'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'white'; }}
+              >
+                Experimentar agora
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+              </a>
+            </div>
           </div>
         </ScrollReveal>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .forwhom-cta-img { display: none !important; }
+          .forwhom-btn-container { margin-top: 1rem !important; }
+        }
+      `}</style>
     </section>
   );
 }

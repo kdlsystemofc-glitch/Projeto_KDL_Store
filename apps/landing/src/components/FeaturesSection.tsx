@@ -151,7 +151,36 @@ export default function FeaturesSection() {
 
                   {/* Conteúdo principal */}
                   <div style={{ flex: 1 }}>
-                    {/* Ícone */}
+                    {/* Imagem real dentro do card grande — PDV */}
+                  {isHighlight && i === 0 && (
+                    <div style={{
+                      width: '100%', height: 160, borderRadius: 12, overflow: 'hidden',
+                      marginBottom: '1.5rem', flexShrink: 0,
+                      background: 'rgba(255,255,255,0.05)',
+                    }}>
+                      <img
+                        src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80&auto=format&fit=crop"
+                        alt="PDV Inteligente"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, borderRadius: 12 }}
+                      />
+                    </div>
+                  )}
+                  {/* Imagem real para card OS */}
+                  {isHighlight && i === 5 && (
+                    <div style={{
+                      width: '100%', height: 140, borderRadius: 12, overflow: 'hidden',
+                      marginBottom: '1.5rem', flexShrink: 0,
+                      background: 'rgba(255,255,255,0.05)',
+                    }}>
+                      <img
+                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80&auto=format&fit=crop"
+                        alt="Ordens de Serviço"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75, borderRadius: 12 }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Ícone */}
                     <div style={{
                       width: 52, height: 52, borderRadius: 16,
                       background: isHighlight ? 'rgba(255,255,255,0.1)' : '#F0EDE5',

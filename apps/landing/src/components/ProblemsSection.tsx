@@ -54,19 +54,29 @@ export default function ProblemsSection() {
 
         {/* Header */}
         <ScrollReveal direction="up">
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '5rem', flexWrap: 'wrap', gap: '2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '4rem', marginBottom: '5rem', alignItems: 'center' }}>
             <div>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1C3D2E', marginBottom: '1rem' }}>
                 A realidade do pequeno comércio
               </p>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#111', maxWidth: 520 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#111', marginBottom: '1.5rem' }}>
                 Sua loja merece mais<br />
                 <em style={{ fontStyle: 'italic', color: '#1C3D2E' }}>do que improviso.</em>
               </h2>
+              <p style={{ fontSize: '1rem', color: '#666', lineHeight: 1.7, fontFamily: 'Inter, sans-serif', maxWidth: 420 }}>
+                Criamos o KDL Store depois de ver de perto como pequenas lojas ainda sobrevivem no limite — com anotações de papel e sistemas complexos. Não precisa ser assim.
+              </p>
             </div>
-            <p style={{ fontSize: '1rem', color: '#666', maxWidth: 340, lineHeight: 1.7, fontFamily: 'Inter, sans-serif', paddingTop: '3.5rem' }}>
-              Criamos o KDL Store depois de ver de perto como pequenas lojas ainda sobrevivem no limite — e como isso não precisa ser assim.
-            </p>
+            
+            {/* Imagem real com cantos arredondados */}
+            <div style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
+              <div style={{ paddingBottom: '60%' }} /> {/* Aspect Ratio 5:3 */}
+              <img 
+                src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=1200&auto=format&fit=crop" 
+                alt="Anotações e planilhas" 
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            </div>
           </div>
         </ScrollReveal>
 
