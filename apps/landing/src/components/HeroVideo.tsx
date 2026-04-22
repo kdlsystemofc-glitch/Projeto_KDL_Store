@@ -46,7 +46,7 @@ export default function HeroVideo() {
         top: 0,
         left: 0,
         width: '100%',
-        height: '100%',
+        height: '100lvh', // Evita o recalculo do 100vh no iOS (zoom/stuttering)
         zIndex: 0,
       }}>
         <video
@@ -117,7 +117,7 @@ export default function HeroVideo() {
           backdropFilter: 'blur(10px)'
         }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.9)' }}>
-            Lançamento 2025
+            Lançamento 2026
           </span>
         </div>
 

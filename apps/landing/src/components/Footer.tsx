@@ -126,7 +126,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <ScrollReveal direction="up" delay={0.3}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '2rem', borderTop: '1px solid #E0DDD5', flexWrap: 'wrap', gap: '1rem' }}>
-            <p style={{ fontSize: '0.8rem', color: '#bbb', fontFamily: 'Inter, sans-serif' }}>© 2025 KDL Store. Todos os direitos reservados.</p>
+            <p style={{ fontSize: '0.8rem', color: '#bbb', fontFamily: 'Inter, sans-serif' }}>© 2026 KDL Store. Todos os direitos reservados.</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#1C3D2E' }} />
               <p style={{ fontSize: '0.8rem', color: '#bbb', fontFamily: 'Inter, sans-serif' }}>Sistema operacional</p>
