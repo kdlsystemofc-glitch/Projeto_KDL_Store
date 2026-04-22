@@ -93,42 +93,51 @@ function CadastroForm() {
   }
 
   return (
-    <div className="auth-card animate-slide-up" style={{ maxWidth: 480 }}>
-      {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '2rem' }}>
-        <div
-          style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #6C47FF, #00D4AA)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontWeight: 900, fontSize: 16,
-          }}
-        >K</div>
-        <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 18 }}>
-          KDL <span className="text-gradient">Store</span>
-        </span>
+    <div className="animate-slide-up" style={{
+      background: '#fff',
+      border: '1px solid #eee',
+      borderRadius: 24,
+      padding: '3rem',
+      width: '100%',
+      maxWidth: 520,
+      boxShadow: '0 20px 40px rgba(0,0,0,0.04)'
+    }}>
+      {/* Logo Landing */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
+        <a href="https://kdlstore.com.br" style={{
+          fontFamily: 'Georgia, serif', fontSize: '1.5rem', fontWeight: 700,
+          letterSpacing: '0.02em', color: '#111', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.6rem'
+        }}>
+          <div style={{ width: 36, height: 36, background: '#1C3D2E', color: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>K</div>
+          KDL Store
+        </a>
       </div>
 
       {/* Plan badge */}
-      <div
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          padding: '0.375rem 0.875rem', borderRadius: 8, marginBottom: '1.5rem',
-          background: `${plan.color}15`, border: `1px solid ${plan.color}30`, color: plan.color,
-          fontSize: '0.8rem', fontWeight: 700,
-        }}
-      >
-        <span>Plano {plan.name}</span>
-        <span style={{ opacity: 0.6 }}>·</span>
-        <span>{plan.price}</span>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '0.4rem 1rem', borderRadius: 100,
+            background: 'rgba(28,61,46,0.05)', color: '#1C3D2E',
+            border: '1px solid rgba(28,61,46,0.1)',
+            fontSize: '0.85rem', fontWeight: 600,
+          }}
+        >
+          <span>Plano {plan.name}</span>
+          <span style={{ opacity: 0.4 }}>·</span>
+          <span>{plan.price}</span>
+        </div>
       </div>
 
-      <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-        {step === 'info' ? 'Crie sua conta' : 'Finalizar pagamento'}
-      </h1>
-      <p style={{ color: 'var(--kdl-text-muted)', marginBottom: '2rem', fontSize: '0.875rem' }}>
-        {step === 'info' ? 'Preencha os dados da sua loja' : 'Confirme os dados e pague'}
-      </p>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.75rem', fontWeight: 700, color: '#111', marginBottom: '0.5rem' }}>
+          {step === 'info' ? 'Crie sua conta' : 'Finalizar pagamento'}
+        </h1>
+        <p style={{ color: '#666', fontSize: '0.95rem' }}>
+          {step === 'info' ? 'Preencha os dados da sua loja' : 'Confirme os dados e pague'}
+        </p>
+      </div>
 
       {/* Steps indicator */}
       <div style={{ display: 'flex', gap: 8, marginBottom: '2rem' }}>
@@ -138,101 +147,98 @@ function CadastroForm() {
             style={{
               flex: 1, height: 4, borderRadius: 2,
               background: i === 0 || step === 'pagamento'
-                ? 'linear-gradient(90deg, #6C47FF, #00D4AA)'
-                : 'rgba(255,255,255,0.1)',
+                ? '#1C3D2E'
+                : '#eee',
             }}
           />
         ))}
       </div>
 
       {error && (
-        <div className="alert alert-danger" style={{ marginBottom: '1.25rem' }}>
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-            <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-          </svg>
+        <div style={{ background: '#FFF1F2', border: '1px solid #FFE4E6', color: '#E11D48', padding: '0.875rem', borderRadius: 12, marginBottom: '1.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
           {error}
         </div>
       )}
 
       {step === 'info' ? (
-        <form onSubmit={handleInfoSubmit} id="cadastro-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleInfoSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="cad-name">Seu nome</label>
-              <input id="cad-name" type="text" className="form-input" placeholder="João Silva" value={form.name} onChange={e => update('name', e.target.value)} required />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#444' }} htmlFor="cad-name">Seu nome</label>
+              <input id="cad-name" type="text" placeholder="João Silva" value={form.name} onChange={e => update('name', e.target.value)} required style={{ width: '100%', padding: '0.875rem 1rem', background: '#fff', border: '1px solid #ddd', borderRadius: 12, color: '#111', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }} onFocus={e => e.target.style.borderColor = '#1C3D2E'} onBlur={e => e.target.style.borderColor = '#ddd'} />
             </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="cad-phone">Telefone</label>
-              <input id="cad-phone" type="tel" className="form-input" placeholder="(11) 99999-9999" value={form.phone} onChange={e => update('phone', e.target.value)} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#444' }} htmlFor="cad-phone">Telefone</label>
+              <input id="cad-phone" type="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={e => update('phone', e.target.value)} style={{ width: '100%', padding: '0.875rem 1rem', background: '#fff', border: '1px solid #ddd', borderRadius: 12, color: '#111', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }} onFocus={e => e.target.style.borderColor = '#1C3D2E'} onBlur={e => e.target.style.borderColor = '#ddd'} />
             </div>
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="cad-store">Nome da loja</label>
-            <input id="cad-store" type="text" className="form-input" placeholder="Ex: Auto Som Central" value={form.storeName} onChange={e => update('storeName', e.target.value)} required />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#444' }} htmlFor="cad-store">Nome da loja</label>
+            <input id="cad-store" type="text" placeholder="Ex: Auto Som Central" value={form.storeName} onChange={e => update('storeName', e.target.value)} required style={{ width: '100%', padding: '0.875rem 1rem', background: '#fff', border: '1px solid #ddd', borderRadius: 12, color: '#111', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }} onFocus={e => e.target.style.borderColor = '#1C3D2E'} onBlur={e => e.target.style.borderColor = '#ddd'} />
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="cad-email">Email</label>
-            <input id="cad-email" type="email" className="form-input" placeholder="seu@email.com" value={form.email} onChange={e => update('email', e.target.value)} required autoComplete="email" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#444' }} htmlFor="cad-email">E-mail</label>
+            <input id="cad-email" type="email" placeholder="seu@email.com" value={form.email} onChange={e => update('email', e.target.value)} required autoComplete="email" style={{ width: '100%', padding: '0.875rem 1rem', background: '#fff', border: '1px solid #ddd', borderRadius: 12, color: '#111', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }} onFocus={e => e.target.style.borderColor = '#1C3D2E'} onBlur={e => e.target.style.borderColor = '#ddd'} />
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="cad-password">Senha</label>
-            <input id="cad-password" type="password" className="form-input" placeholder="Mínimo 6 caracteres" value={form.password} onChange={e => update('password', e.target.value)} required />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#444' }} htmlFor="cad-password">Senha</label>
+            <input id="cad-password" type="password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={e => update('password', e.target.value)} required style={{ width: '100%', padding: '0.875rem 1rem', background: '#fff', border: '1px solid #ddd', borderRadius: 12, color: '#111', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }} onFocus={e => e.target.style.borderColor = '#1C3D2E'} onBlur={e => e.target.style.borderColor = '#ddd'} />
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="cad-confirm">Confirmar senha</label>
-            <input id="cad-confirm" type="password" className="form-input" placeholder="Repita a senha" value={form.confirm} onChange={e => update('confirm', e.target.value)} required />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#444' }} htmlFor="cad-confirm">Confirmar senha</label>
+            <input id="cad-confirm" type="password" placeholder="Repita a senha" value={form.confirm} onChange={e => update('confirm', e.target.value)} required style={{ width: '100%', padding: '0.875rem 1rem', background: '#fff', border: '1px solid #ddd', borderRadius: 12, color: '#111', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }} onFocus={e => e.target.style.borderColor = '#1C3D2E'} onBlur={e => e.target.style.borderColor = '#ddd'} />
           </div>
-          <button id="cadastro-next" type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', marginTop: '0.5rem' }}>
+          <button type="submit" style={{ width: '100%', background: '#1C3D2E', color: 'white', padding: '1rem', borderRadius: 12, fontWeight: 600, fontSize: '1rem', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '0.5rem', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#2A5C42'} onMouseLeave={e => e.currentTarget.style.background = '#1C3D2E'}>
             Continuar para pagamento →
           </button>
         </form>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Summary */}
-          <div className="card" style={{ background: 'var(--kdl-surface-2)' }}>
-            <p style={{ fontSize: '0.8rem', color: 'var(--kdl-text-muted)', marginBottom: 8 }}>Resumo do pedido</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 600 }}>KDL Store — Plano {plan.name}</span>
-              <span style={{ fontWeight: 700, color: plan.color }}>{plan.price}</span>
+          <div style={{ background: '#F7F6F2', border: '1px solid #eee', borderRadius: 12, padding: '1.5rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem', fontWeight: 600 }}>Resumo do pedido</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 600, color: '#111' }}>KDL Store — Plano {plan.name}</span>
+              <span style={{ fontWeight: 700, color: '#1C3D2E' }}>{plan.price}</span>
             </div>
-            <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--kdl-text-muted)' }}>
+            <div style={{ fontSize: '0.9rem', color: '#666' }}>
               {form.storeName} · {form.email}
             </div>
           </div>
 
-          <div className="alert alert-info">
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-              <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-            </svg>
+          <div style={{ background: '#F0F9FF', border: '1px solid #E0F2FE', color: '#0369A1', padding: '0.875rem', borderRadius: 12, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
             <span>Você será redirecionado para o Stripe Checkout para completar o pagamento com segurança.</span>
           </div>
 
           <button
-            id="cadastro-pay"
             type="button"
-            className="btn btn-primary"
             onClick={handleCheckout}
             disabled={loading}
-            style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
+            style={{ width: '100%', background: '#1C3D2E', color: 'white', padding: '1rem', borderRadius: 12, fontWeight: 600, fontSize: '1rem', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', transition: 'background 0.2s' }}
+            onMouseEnter={e => { if(!loading) e.currentTarget.style.background = '#2A5C42'; }}
+            onMouseLeave={e => { if(!loading) e.currentTarget.style.background = '#1C3D2E'; }}
           >
             {loading ? (
-              <><svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" /></svg> Processando...</>
+              <><svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" /></svg> Processando...</>
             ) : '🔒 Pagar com cartão'}
           </button>
           <button
             type="button"
-            className="btn btn-ghost"
             onClick={() => setStep('info')}
-            style={{ width: '100%', justifyContent: 'center' }}
+            style={{ width: '100%', background: 'transparent', color: '#666', border: 'none', padding: '1rem', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#111'}
+            onMouseLeave={e => e.currentTarget.style.color = '#666'}
           >
             ← Voltar
           </button>
         </div>
       )}
 
-      <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--kdl-text-muted)' }}>
+      <p style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem', color: '#666' }}>
         Já tem conta?{' '}
-        <a href="/login" style={{ color: 'var(--kdl-primary-light)', textDecoration: 'none', fontWeight: 600 }}>
+        <a href="/login" style={{ color: '#1C3D2E', textDecoration: 'none', fontWeight: 600 }}>
           Entrar
         </a>
       </p>
@@ -242,14 +248,16 @@ function CadastroForm() {
 
 export default function CadastroPage() {
   return (
-    <div className="auth-page">
-      <div
-        style={{
-          position: 'fixed', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(108,71,255,0.15) 0%, transparent 70%)',
-        }}
-      />
-      <Suspense fallback={<div className="auth-card animate-slide-up" style={{ maxWidth: 480, padding: 40, textAlign: 'center' }}>Carregando...</div>}>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#F7F6F2',
+      padding: '1.5rem',
+      fontFamily: 'Inter, sans-serif'
+    }}>
+      <Suspense fallback={<div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: '3rem', width: '100%', maxWidth: 520, textAlign: 'center' }}>Carregando...</div>}>
         <CadastroForm />
       </Suspense>
     </div>

@@ -40,38 +40,57 @@ export default function ForWhomSection() {
           </div>
         </ScrollReveal>
 
-        {/* Grid de segmentos — 4 colunas com borda fina separando */}
-        <StaggerReveal style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1px', background: '#E0DDD5', border: '1px solid #E0DDD5' }}>
+        {/* Grid de segmentos — 4 colunas */}
+        <StaggerReveal style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem' }}>
           {STORE_TYPES.map((type, i) => (
             <StaggerItem key={i} direction="up">
               <div
                 style={{
                   background: '#fff',
-                  padding: '2rem 1.75rem',
+                  padding: '2.5rem 1.5rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.75rem',
-                  transition: 'background 0.25s ease',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  gap: '1rem',
+                  transition: 'all 0.3s ease',
                   cursor: 'default',
                   minHeight: 180,
+                  borderRadius: 16,
+                  border: '1px solid #eee',
+                  boxShadow: '0 5px 20px rgba(0,0,0,0.01)',
                 }}
                 onMouseEnter={e => {
                   const el = e.currentTarget as HTMLDivElement;
-                  el.style.background = '#E8EDE0';
+                  el.style.transform = 'translateY(-4px)';
+                  el.style.boxShadow = '0 15px 40px rgba(0,0,0,0.06)';
+                  el.style.borderColor = '#1C3D2E';
                 }}
                 onMouseLeave={e => {
                   const el = e.currentTarget as HTMLDivElement;
-                  el.style.background = '#fff';
+                  el.style.transform = 'translateY(0)';
+                  el.style.boxShadow = '0 5px 20px rgba(0,0,0,0.01)';
+                  el.style.borderColor = '#eee';
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '1.75rem' }}>{type.icon}</span>
-                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#ccc" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" /></svg>
+                <div style={{
+                  fontSize: '2.5rem',
+                  marginBottom: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 72,
+                  height: 72,
+                  borderRadius: '50%',
+                  background: 'rgba(28,61,46,0.03)'
+                }}>
+                  {type.icon}
                 </div>
-                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1.15rem', fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
+                
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
                   {type.label}
                 </h3>
-                <p style={{ fontSize: '0.875rem', color: '#888', lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>
+                <p style={{ fontSize: '0.9rem', color: '#777', lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>
                   {type.desc}
                 </p>
               </div>

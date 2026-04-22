@@ -1,6 +1,7 @@
 'use client';
 
 import { ScrollReveal, StaggerReveal, StaggerItem } from './ParallaxKit';
+import { Monitor, ClipboardList } from 'lucide-react';
 
 const FEATURES = [
   {
@@ -151,34 +152,30 @@ export default function FeaturesSection() {
 
                   {/* Conteúdo principal */}
                   <div style={{ flex: 1 }}>
-                    {/* Imagem real dentro do card grande — PDV */}
-                  {isHighlight && i === 0 && (
-                    <div style={{
-                      width: '100%', height: 160, borderRadius: 12, overflow: 'hidden',
-                      marginBottom: '1.5rem', flexShrink: 0,
-                      background: 'rgba(255,255,255,0.05)',
-                    }}>
-                      <img
-                        src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80&auto=format&fit=crop"
-                        alt="PDV Inteligente"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, borderRadius: 12 }}
-                      />
-                    </div>
-                  )}
-                  {/* Imagem real para card OS */}
-                  {isHighlight && i === 5 && (
-                    <div style={{
-                      width: '100%', height: 140, borderRadius: 12, overflow: 'hidden',
-                      marginBottom: '1.5rem', flexShrink: 0,
-                      background: 'rgba(255,255,255,0.05)',
-                    }}>
-                      <img
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80&auto=format&fit=crop"
-                        alt="Ordens de Serviço"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75, borderRadius: 12 }}
-                      />
-                    </div>
-                  )}
+                    {/* Placeholder para card PDV */}
+                    {isHighlight && i === 0 && (
+                      <div style={{
+                        width: '100%', height: 160, borderRadius: 12, overflow: 'hidden',
+                        marginBottom: '1.5rem', flexShrink: 0,
+                        background: '#1a1a1a', border: '1px solid #333',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                      }}>
+                        <Monitor size={32} color="rgba(255,255,255,0.2)" />
+                        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'Inter, sans-serif', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Preview em breve</span>
+                      </div>
+                    )}
+                    {/* Placeholder para card OS */}
+                    {isHighlight && i === 5 && (
+                      <div style={{
+                        width: '100%', height: 140, borderRadius: 12, overflow: 'hidden',
+                        marginBottom: '1.5rem', flexShrink: 0,
+                        background: '#1a1a1a', border: '1px solid #333',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                      }}>
+                        <ClipboardList size={32} color="rgba(255,255,255,0.2)" />
+                        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'Inter, sans-serif', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Preview em breve</span>
+                      </div>
+                    )}
 
                   {/* Ícone */}
                     <div style={{
