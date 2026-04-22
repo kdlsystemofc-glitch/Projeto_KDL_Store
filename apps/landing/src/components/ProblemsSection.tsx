@@ -49,7 +49,7 @@ const PROBLEMS = [
 
 export default function ProblemsSection() {
   return (
-    <section id="problemas" style={{ background: '#F7F6F2', padding: '7rem 0', position: 'relative' }}>
+    <section id="problemas" style={{ background: '#F7F6F2', padding: '7rem 0', position: 'relative', zIndex: 2 }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem' }}>
 
         {/* Header */}

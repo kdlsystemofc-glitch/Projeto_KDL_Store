@@ -30,54 +30,53 @@ export default function HeroVideo() {
       width: '100%',
       height: '100vh',
       minHeight: 600,
-      overflow: 'hidden',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#111'
+      zIndex: 1, // Permite que a próxima seção role por cima do fixed background
     }}>
-      {/* Background Media */}
-      {!useFallback ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            zIndex: 0
-          }}
-          poster="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2000&auto=format&fit=crop"
-        >
-          <source src="/hero.webm" type="video/webm" />
-          <source src="/hero.mp4" type="video/mp4" />
-        </video>
-      ) : (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            backgroundImage: 'url("https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2000&auto=format&fit=crop")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            zIndex: 0
-          }}
-        />
-      )}
-
-      {/* Dark Overlay Gradient (Bottom to Top) */}
+      {/* Background Media (Fixed para efeito parallax) */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0,
+        ...(useFallback ? {
+          backgroundImage: 'url("https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2000&auto=format&fit=crop")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : {})
+      }}>
+        {!useFallback && (
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block'
+            }}
+            poster="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2000&auto=format&fit=crop"
+          >
+            <source src="/hero.webm" type="video/webm" />
+            <source src="/hero.mp4" type="video/mp4" />
+          </video>
+        )}
+      </div>
+
+      {/* Dark Overlay Gradient (Bottom to Top) - Fixo como o vídeo */}
+      <div style={{
+        position: 'fixed',
         inset: 0,
         background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)',
-        zIndex: 1
+        zIndex: 1,
+        pointerEvents: 'none' // garante que os cliques passem
       }} />
 
       {/* Hero Content */}
