@@ -52,10 +52,12 @@ export default function ClientesPage() {
     Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
     
     if (editing) {
-      const { data } = await supabase.from('customers').update(payload).eq('id', editing.id).select().single();
+      const { data, error } = await supabase.from('customers').update(payload).eq('id', editing.id).select().single();
+      if (error) alert('Erro ao atualizar: ' + error.message + '\n' + (error.details || ''));
       if (data) setCustomers(prev => prev.map(c => c.id === data.id ? data : c));
     } else {
-      const { data } = await supabase.from('customers').insert({ ...payload, tenant_id: tenantId }).select().single();
+      const { data, error } = await supabase.from('customers').insert({ ...payload, tenant_id: tenantId }).select().single();
+      if (error) alert('Erro ao inserir: ' + error.message + '\n' + (error.details || ''));
       if (data) setCustomers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
     }
     setSaving(false); setShowModal(false);

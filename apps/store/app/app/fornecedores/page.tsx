@@ -52,10 +52,12 @@ export default function FornecedoresPage() {
     Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
 
     if (editing) {
-      const { data } = await supabase.from('suppliers').update(payload).eq('id', editing.id).select().single();
+      const { data, error } = await supabase.from('suppliers').update(payload).eq('id', editing.id).select().single();
+      if (error) alert('Erro ao atualizar: ' + error.message + '\n' + (error.details || ''));
       if (data) setSuppliers(prev => prev.map(s => s.id === data.id ? data : s));
     } else {
-      const { data } = await supabase.from('suppliers').insert({ ...payload, tenant_id: tenantId }).select().single();
+      const { data, error } = await supabase.from('suppliers').insert({ ...payload, tenant_id: tenantId }).select().single();
+      if (error) alert('Erro ao inserir: ' + error.message + '\n' + (error.details || ''));
       if (data) setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
     }
     setSaving(false); setShowModal(false);
