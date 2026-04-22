@@ -48,11 +48,14 @@ export default function FornecedoresPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setSaving(true);
+    const payload: any = { ...form };
+    Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
+
     if (editing) {
-      const { data } = await supabase.from('suppliers').update(form).eq('id', editing.id).select().single();
+      const { data } = await supabase.from('suppliers').update(payload).eq('id', editing.id).select().single();
       if (data) setSuppliers(prev => prev.map(s => s.id === data.id ? data : s));
     } else {
-      const { data } = await supabase.from('suppliers').insert({ ...form, tenant_id: tenantId }).select().single();
+      const { data } = await supabase.from('suppliers').insert({ ...payload, tenant_id: tenantId }).select().single();
       if (data) setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
     }
     setSaving(false); setShowModal(false);
