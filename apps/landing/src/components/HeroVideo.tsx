@@ -18,27 +18,16 @@ export default function HeroVideo() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    // Check connection speed for fallback
-    if ('connection' in navigator) {
-      const conn = (navigator as any).connection;
-      if (conn.effectiveType === '2g' || conn.effectiveType === 'slow-3g') {
-        setUseFallback(true);
-      }
-    }
+  const [isPlaying, setIsPlaying] = useState(false);
 
+  useEffect(() => {
     // Attempt to play the video programmatically as a fallback for autoplay issues
-    if (videoRef.current && !useFallback && !isMobile) {
+    if (videoRef.current) {
       videoRef.current.play().catch((err) => {
         console.warn('Autoplay prevented or failed:', err);
       });
     }
-  }, [useFallback, isMobile]);
-
-  // Se for mobile, forçamos o fallback da imagem para evitar o botão de play do iOS
-  const showVideo = !useFallback && !isMobile;
-  // Desativar fixed (parallax) no mobile para evitar saltos (jitter) com a barra do navegador
-  const bgPosition = isMobile ? 'absolute' : 'fixed';
+  }, []);
 
   return (
     <section style={{
@@ -50,47 +39,53 @@ export default function HeroVideo() {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 1, // Permite que a próxima seção role por cima do fixed background
-      overflow: 'hidden'
     }}>
-      {/* Background Media */}
+      {/* Background Media (Fixed para efeito parallax em TODAS as telas) */}
       <div style={{
-        position: bgPosition,
+        position: 'fixed',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
         zIndex: 0,
-        ...((!showVideo) ? {
+      }}>
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          onPlaying={() => setIsPlaying(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+            pointerEvents: 'none'
+          }}
+          poster="/hero-poster.jpg"
+        >
+          <source src="/hero.webm" type="video/webm" />
+          <source src="/hero.mp4" type="video/mp4" />
+        </video>
+
+        {/* Camada de Poster Inteligente: Cobre o vídeo e qualquer botão do Safari nativo.
+            Só desaparece se o vídeo realmente começar a tocar. */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
           backgroundImage: 'url("/hero-poster.jpg")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-        } : {})
-      }}>
-        {showVideo && (
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              pointerEvents: 'none'
-            }}
-            poster="/hero-poster.jpg"
-          >
-            <source src="/hero.webm" type="video/webm" />
-            <source src="/hero.mp4" type="video/mp4" />
-          </video>
-        )}
+          opacity: isPlaying ? 0 : 1,
+          transition: 'opacity 0.8s ease',
+          pointerEvents: 'none'
+        }} />
       </div>
 
       {/* Dark Overlay Gradient (Bottom to Top) */}
       <div style={{
-        position: bgPosition,
+        position: 'fixed',
         inset: 0,
         background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)',
         zIndex: 1,
