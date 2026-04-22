@@ -43,13 +43,11 @@ body {
 }
 
 /* Evitar botão de play gigante em vídeos do safari no iOS em Low Power Mode */
-video::-webkit-media-controls-start-playback-button {
-  display: none !important;
-  -webkit-appearance: none;
-}
-video::-webkit-media-controls {
-  display: none !important;
-}
+video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
+video::-webkit-media-controls { display: none !important; }
+video::-webkit-media-controls-enclosure { display: none !important; }
+video::-webkit-media-controls-panel { display: none !important; }
+video::-webkit-media-controls-play-button { display: none !important; }
 
 /* Headings usam Georgia serif — estilo Ascone */
 h1, h2, h3, h4, h5, h6 {

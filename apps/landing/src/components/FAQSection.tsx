@@ -22,10 +22,10 @@ export default function FAQSection() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem' }}>
 
         {/* Layout 2 colunas — idêntico ao Ascone */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '6rem', alignItems: 'start' }}>
+        <div className="faq-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '6rem', alignItems: 'start' }}>
 
           {/* Coluna esquerda: título fixo */}
-          <div style={{ position: 'sticky', top: '6rem' }}>
+          <div className="faq-sticky" style={{ position: 'sticky', top: '6rem' }}>
             <ScrollReveal direction="up">
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1C3D2E', marginBottom: '1rem' }}>
                 FAQ
