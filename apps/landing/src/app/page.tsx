@@ -1,5 +1,5 @@
 import Navbar from '@/components/Navbar';
-import HeroScrollytelling from '@/components/HeroScrollytelling';
+import HeroVideo from '@/components/HeroVideo';
 import ProblemsSection from '@/components/ProblemsSection';
 import FeaturesSection from '@/components/FeaturesSection';
 import ForWhomSection from '@/components/ForWhomSection';
@@ -13,8 +13,8 @@ export default function Home() {
     <main style={{ background: '#fff' }}>
       <Navbar />
 
-      {/* Hero — mantido no dark mode */}
-      <HeroScrollytelling />
+      {/* Novo Hero em Vídeo */}
+      <HeroVideo />
 
       {/* Conteúdo light mode — estilo Ascone */}
       <ProblemsSection />
