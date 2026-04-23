@@ -104,6 +104,7 @@ create table products (
   name        text not null,
   sku         text,
   category_id uuid references categories(id),
+  supplier_id uuid references suppliers(id) on delete set null,
   cost_price  numeric(10,2) default 0,
   sale_price  numeric(10,2) not null,
   stock_qty   integer default 0,
@@ -130,9 +131,12 @@ create table stock_movements (
   tenant_id       uuid references tenants(id) on delete cascade,
   product_id      uuid references products(id),
   user_id         uuid references users(id),
+  supplier_id     uuid references suppliers(id) on delete set null,
   type            text not null,  -- entry | exit | adjustment | loss
   qty             integer not null,
+  unit_cost       numeric(10,2) default 0,
   reason          text,
+  reference       text,
   reference_type  text,           -- sale | purchase_order | manual
   reference_id    uuid,
   created_at      timestamptz default now()

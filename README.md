@@ -45,7 +45,9 @@ pnpm dev:admin    # http://localhost:3002
 
 ## Documentação
 
-Veja [`docs/SYSTEM_MAP.md`](./docs/SYSTEM_MAP.md) para o mapeamento completo do sistema: telas, fluxos, banco de dados, componentes e muito mais.
+- [`AI_CONTEXT.md`](./AI_CONTEXT.md) - Arquivo essencial para agentes de inteligência artificial ou desenvolvedores que continuarão o projeto (Contém regras do DB, Supabase e UI).
+- [`docs/schema.sql`](./docs/schema.sql) - Schema relacional completo do banco de dados (Supabase PostgreSQL).
+- [`docs/SYSTEM_MAP.md`](./docs/SYSTEM_MAP.md) - Mapeamento completo do sistema: telas, fluxos, componentes e muito mais.
 
 ## Planos
 
@@ -59,6 +61,6 @@ Veja [`docs/SYSTEM_MAP.md`](./docs/SYSTEM_MAP.md) para o mapeamento completo do 
 
 - ✅ Fase 1 — Fundação (Monorepo, estrutura, .gitignore)
 - ✅ Fase 2 — Landing Page
-- 🔄 Fase 3 — App da Loja
+- ✅ Fase 3 — App da Loja (Estoque avançado, Fornecedores, Auto-healing, Financeiro)
 - 🔄 Fase 4 — Portal Admin
-- 🔄 Fase 5 — Documentação Final
+- ✅ Fase 5 — Documentação Final
