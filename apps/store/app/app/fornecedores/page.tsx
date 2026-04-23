@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-type Supplier = { id: string; name: string; contact_name: string; phone: string; whatsapp: string; email: string; payment_terms: string; avg_delivery_days: number; notes: string };
+type Supplier = { id: string; name: string; contact_name: string; phone: string; whatsapp: string; email: string; payment_terms: string; notes: string };
 type Product = { id: string; name: string; stock_qty: number; min_stock: number };
 type OrderItem = { product_id: string; name: string; qty: number };
 
@@ -21,7 +21,7 @@ export default function FornecedoresPage() {
   const [orderNotes, setOrderNotes] = useState('');
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
-  const [form, setForm] = useState({ name: '', contact_name: '', phone: '', whatsapp: '', email: '', payment_terms: '', avg_delivery_days: 1, notes: '' });
+  const [form, setForm] = useState({ name: '', contact_name: '', phone: '', whatsapp: '', email: '', payment_terms: '', notes: '' });
 
   useEffect(() => {
     async function load() {
@@ -43,8 +43,8 @@ export default function FornecedoresPage() {
     load();
   }, []);
 
-  function openNew() { setEditing(null); setForm({ name: '', contact_name: '', phone: '', whatsapp: '', email: '', payment_terms: '', avg_delivery_days: 1, notes: '' }); setShowModal(true); }
-  function openEdit(s: Supplier) { setEditing(s); setForm({ name: s.name, contact_name: s.contact_name || '', phone: s.phone || '', whatsapp: s.whatsapp || '', email: s.email || '', payment_terms: s.payment_terms || '', avg_delivery_days: s.avg_delivery_days || 1, notes: s.notes || '' }); setShowModal(true); }
+  function openNew() { setEditing(null); setForm({ name: '', contact_name: '', phone: '', whatsapp: '', email: '', payment_terms: '', notes: '' }); setShowModal(true); }
+  function openEdit(s: Supplier) { setEditing(s); setForm({ name: s.name, contact_name: s.contact_name || '', phone: s.phone || '', whatsapp: s.whatsapp || '', email: s.email || '', payment_terms: s.payment_terms || '', notes: s.notes || '' }); setShowModal(true); }
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setSaving(true);
@@ -109,14 +109,12 @@ export default function FornecedoresPage() {
     setSaving(false); setOrderSupplier(null);
   }
 
-  function buildWhatsAppMsg(s: Supplier) {
-    const items = orderItems.filter(i => i.name.trim());
-    const lines = items.map(i => `• ${i.name}: ${i.qty} un`).join('\n');
-    const msg = `Olá${s.contact_name ? ` ${s.contact_name}` : ''}! Segue pedido:\n\n${lines}${orderNotes ? `\n\nObs: ${orderNotes}` : ''}`;
+  function buildWhatsAppMsg(s: Supplier, o: any) {
+    const msg = `Olá${s.contact_name ? ` ${s.contact_name}` : ''}! Segue pedido #${o.id.slice(0,6)}:\n\n${o.product_description}\n\nQtd: ${o.qty} un${o.notes ? `\nObs: ${o.notes}` : ''}`;
     return `https://wa.me/55${(s.whatsapp || s.phone).replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
   }
 
-  const filtered = suppliers.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.phone?.includes(search));
+  const filtered = suppliers.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.contact_name?.toLowerCase().includes(search.toLowerCase()));
   const supplierOrders = selectedSupplier ? orders.filter(o => o.supplier_id === selectedSupplier.id) : [];
   const statusMap: Record<string, string> = { requested: '⏳ Aguardando', received: '✅ Recebido', partial: '📦 Parcial', cancelled: '❌ Cancelado' };
 
@@ -172,10 +170,15 @@ export default function FornecedoresPage() {
                   : supplierOrders.map(o => (
                     <div key={o.id} style={{ padding: '0.625rem 0', borderBottom: '1px solid var(--kdl-border)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>{o.product_description}</p>
+                        <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>#{o.id.slice(0,6)} - {o.product_description}</p>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: o.status === 'received' ? '#10B981' : o.status === 'cancelled' ? '#EF4444' : '#F59E0B' }}>{statusMap[o.status] || o.status}</span>
                       </div>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--kdl-text-muted)' }}>{o.qty} un · {new Date(o.created_at).toLocaleDateString('pt-BR')}</p>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--kdl-text-muted)', marginBottom: '0.5rem' }}>{o.qty} un · Criado em {new Date(o.created_at).toLocaleDateString('pt-BR')}</p>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {(selectedSupplier?.whatsapp || selectedSupplier?.phone) && (
+                          <a href={buildWhatsAppMsg(selectedSupplier!, o)} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" title="Enviar pedido pelo WhatsApp">📲 Enviar Zap</a>
+                        )}
+                      </div>
                     </div>
                   ))}
               </div>
@@ -195,8 +198,7 @@ export default function FornecedoresPage() {
               <div className="form-group"><label className="form-label" htmlFor="forn-wa">WhatsApp</label><input id="forn-wa" type="text" className="form-input" value={form.whatsapp} onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))} /></div>
               <div className="form-group"><label className="form-label" htmlFor="forn-email">Email</label><input id="forn-email" type="email" className="form-input" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
               <div className="form-group"><label className="form-label" htmlFor="forn-terms">Condições de Pagamento</label><input id="forn-terms" type="text" className="form-input" value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} placeholder="Ex: 30/60 dias" /></div>
-              <div className="form-group"><label className="form-label" htmlFor="forn-days">Prazo de Entrega (dias)</label><input id="forn-days" type="number" min={1} className="form-input" value={form.avg_delivery_days} onChange={e => setForm(f => ({ ...f, avg_delivery_days: Number(e.target.value) }))} /></div>
-              <div className="form-group" style={{ gridColumn: '1/-1' }}><label className="form-label" htmlFor="forn-notes">Observações</label><textarea id="forn-notes" className="form-input" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={{ resize: 'vertical' }} /></div>
+              <div className="form-group" style={{ gridColumn: '1/-1' }}><label className="form-label" htmlFor="forn-notes">Observações</label><textarea id="forn-notes" className="form-input" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={{ resize: 'vertical' }} placeholder="Ex: Entrega a pronta entrega na região central" /></div>
               <div style={{ gridColumn: '1/-1', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                 <button id="forn-save" type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Salvando...' : editing ? 'Salvar' : 'Cadastrar'}</button>
@@ -225,9 +227,6 @@ export default function FornecedoresPage() {
             <div className="form-group" style={{ marginBottom: '1.5rem' }}><label className="form-label" htmlFor="order-notes">Observações</label><textarea id="order-notes" className="form-input" rows={2} value={orderNotes} onChange={e => setOrderNotes(e.target.value)} style={{ resize: 'vertical' }} /></div>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setOrderSupplier(null)}>Cancelar</button>
-              {(orderSupplier.whatsapp || orderSupplier.phone) && (
-                <a href={buildWhatsAppMsg(orderSupplier)} target="_blank" rel="noreferrer" className="btn btn-success" onClick={saveOrder}>📲 Enviar via WhatsApp</a>
-              )}
               <button id="order-save" type="button" className="btn btn-primary" onClick={saveOrder} disabled={saving}>{saving ? 'Salvando...' : '✅ Registrar Pedido'}</button>
             </div>
           </div>
