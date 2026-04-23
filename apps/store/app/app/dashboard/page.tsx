@@ -10,14 +10,15 @@ export default async function DashboardPage() {
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
   const in2days = new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0];
 
-  const [todaySales, yestSales, stockAlerts, urgentOS, dueBills, lastSales] = await Promise.all([
+  const [todaySales, yestSales, allProducts, urgentOS, dueBills, lastSales] = await Promise.all([
     supabase.from('sales').select('total').eq('tenant_id', tenantId).gte('created_at', `${today}T00:00:00`).eq('status', 'completed'),
     supabase.from('sales').select('total').eq('tenant_id', tenantId).gte('created_at', `${yesterday}T00:00:00`).lt('created_at', `${today}T00:00:00`).eq('status', 'completed'),
-    supabase.from('products').select('id,name,stock_qty,min_stock').eq('tenant_id', tenantId).eq('is_active', true).filter('stock_qty', 'lte', 'min_stock').limit(8),
-    supabase.from('service_orders').select('id,customer_id,status,due_date,customers(name)').eq('tenant_id', tenantId).lte('due_date', today).not('status', 'in', '("completed","cancelled","billed")').limit(5),
+    supabase.from('products').select('id,name,stock_qty,min_stock').eq('tenant_id', tenantId).eq('is_active', true),
+    supabase.from('service_orders').select('id,customer_id,status,estimated_date,customers(name)').eq('tenant_id', tenantId).lte('estimated_date', today).not('status', 'in', '("completed","cancelled","billed")').limit(5),
     supabase.from('accounts_payable').select('id,description,amount,due_date').eq('tenant_id', tenantId).eq('status', 'pending').lte('due_date', in2days).order('due_date').limit(5),
     supabase.from('sales').select('id,total,payment_method,created_at,customers(name)').eq('tenant_id', tenantId).gte('created_at', `${today}T00:00:00`).eq('status', 'completed').order('created_at', { ascending: false }).limit(5),
   ]);
+  const stockAlerts = { data: (allProducts.data || []).filter((p: any) => p.stock_qty <= p.min_stock).slice(0, 8) };
 
   const rev = (todaySales.data || []).reduce((s: number, r: any) => s + Number(r.total), 0);
   const yRev = (yestSales.data || []).reduce((s: number, r: any) => s + Number(r.total), 0);
@@ -95,7 +96,7 @@ export default async function DashboardPage() {
                   <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{os.customers?.name || '—'}</p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-muted)' }}>{os.status}</p>
                 </div>
-                <span className="badge badge-danger">{new Date(os.due_date).toLocaleDateString('pt-BR')}</span>
+                <span className="badge badge-danger">{new Date(os.estimated_date).toLocaleDateString('pt-BR')}</span>
               </a>
             ))}
         </div>

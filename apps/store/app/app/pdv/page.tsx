@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useTenant } from '../context';
 
 type Product  = { id: string; name: string; sku: string; sale_price: number; cost_price: number; stock_qty: number; warranty_months?: number };
-type Customer = { id: string; name: string; phone: string; cpf_cnpj: string };
+type Customer = { id: string; name: string; phone: string; cpf_cnpj: string; loyalty_points?: number };
 type CartItem = { product: Product; qty: number; unit_price: number; discount: number; is_gift: boolean };
 type Sale     = { id: string; sale_number?: number; total: number; payment_method: string; created_at: string; status: string; customer?: { name: string } | null };
 
@@ -21,7 +21,7 @@ const saleLabel = (s: Sale) => s.sale_number ? `#${String(s.sale_number).padStar
 
 export default function PDVPage() {
   const supabase = createClient();
-  const { tenantId, userId } = useTenant();
+  const { tenantId, userId, storeName } = useTenant();
   const ref = useRef<HTMLInputElement>(null);
 
   const [products,    setProducts]    = useState<Product[]>([]);
@@ -51,13 +51,18 @@ export default function PDVPage() {
   const [cancelTarget, setCancelTarget] = useState<Sale | null>(null);
   const [cancelling,   setCancelling]   = useState(false);
 
+  // Dados para comprovante e pós-venda
+  const [doneSaleItems,   setDoneSaleItems]   = useState<CartItem[]>([]);
+  const [warrantiesIssued, setWarrantiesIssued] = useState(0);
+  const [pointsEarned,    setPointsEarned]    = useState(0);
+
   useEffect(() => {
     if (!tenantId) return;
     async function load() {
       const today = new Date().toISOString().split('T')[0];
       const [p, c, s] = await Promise.all([
         supabase.from('products').select('id,name,sku,sale_price,cost_price,stock_qty,warranty_months').eq('tenant_id', tenantId).eq('is_active', true),
-        supabase.from('customers').select('id,name,phone,cpf_cnpj').eq('tenant_id', tenantId),
+        supabase.from('customers').select('id,name,phone,cpf_cnpj,loyalty_points').eq('tenant_id', tenantId),
         supabase.from('sales')
           .select('id,sale_number,total,payment_method,created_at,status,customers(name)')
           .eq('tenant_id', tenantId)
@@ -228,12 +233,43 @@ export default function PDVPage() {
       );
     }
 
+    // Emite garantias automaticamente para produtos com warranty_months > 0
+    const warrantyItems = cart.filter(i => !i.is_gift && (i.product.warranty_months ?? 0) > 0);
+    let issued = 0;
+    if (customer && warrantyItems.length > 0) {
+      for (const item of warrantyItems) {
+        const code = `KDL-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+        const wPayload: any = {
+          tenant_id: tenantId, sale_id: saleData.id, customer_id: customer.id,
+          product_id: item.product.id, warranty_months: item.product.warranty_months!,
+          issue_date: new Date().toISOString().split('T')[0], status: 'active', warranty_code: code,
+        };
+        let wOk = false; let wA = 0;
+        while (!wOk && wA < 5) {
+          wA++;
+          const r = await supabase.from('warranties').insert(wPayload);
+          if (r.error) { const c = r.error.message.match(/'([^']+)' column/)?.[1]; if (c) { delete wPayload[c]; continue; } break; }
+          wOk = true; issued++;
+        }
+      }
+    }
+
+    // Pontos de fidelidade: 1 ponto por R$1 gasto
+    let pts = 0;
+    if (customer && total > 0) {
+      pts = Math.floor(total);
+      await supabase.rpc('add_loyalty_points', { p_customer_id: customer.id, p_points: pts });
+    }
+
     // Atualiza estoque local
     setProducts(prev => prev.map(p => {
       const cartItem = cart.find(i => i.product.id === p.id && !i.is_gift);
       return cartItem ? { ...p, stock_qty: Math.max(0, p.stock_qty - cartItem.qty) } : p;
     }));
 
+    setDoneSaleItems([...cart]);
+    setWarrantiesIssued(issued);
+    setPointsEarned(pts);
     setTodaySales(prev => [saleData as Sale, ...prev]);
     setDoneSale(saleData as Sale);
     setLoading(false);
@@ -244,25 +280,22 @@ export default function PDVPage() {
     // Busca itens da venda para estornar estoque
     const { data: items } = await supabase.from('sale_items').select('product_id,qty,is_gift').eq('sale_id', sale.id);
 
-    // Estorna estoque
+    // Estorna estoque (busca valor atual + incrementa)
     if (items) {
       for (const item of items) {
         if (!item.is_gift) {
-          await supabase.from('products').update({ stock_qty: supabase.rpc as any }).eq('id', item.product_id);
-          // Incrementa diretamente
           const { data: prod } = await supabase.from('products').select('stock_qty').eq('id', item.product_id).single();
           if (prod) await supabase.from('products').update({ stock_qty: prod.stock_qty + item.qty }).eq('id', item.product_id);
         }
       }
+      setProducts(prev => prev.map(p => {
+        const item = items.find(i => i.product_id === p.id && !i.is_gift);
+        return item ? { ...p, stock_qty: p.stock_qty + item.qty } : p;
+      }));
     }
 
-    // Cancela a venda
     await supabase.from('sales').update({ status: 'cancelled' }).eq('id', sale.id);
-
-    // Remove lançamento do caixa
     await supabase.from('cash_transactions').delete().eq('reference_id', sale.id).eq('reference_type', 'sale');
-
-    // Remove a receber (se existia)
     await supabase.from('accounts_receivable').delete().eq('sale_id', sale.id);
 
     setTodaySales(prev => prev.filter(s => s.id !== sale.id));
@@ -276,6 +309,43 @@ export default function PDVPage() {
     setTab('pdv'); setTimeout(() => ref.current?.focus(), 100);
   }
 
+  function printReceipt() {
+    if (!doneSale) return;
+    const date = new Date(doneSale.created_at).toLocaleString('pt-BR');
+    const lines = doneSaleItems.map(i =>
+      `${i.product.name.slice(0, 24).padEnd(24)} ${String(i.qty).padStart(2)}x ${fmt(i.unit_price).padStart(10)} ${i.is_gift ? '  BRINDE' : fmt(i.unit_price * i.qty - i.discount).padStart(10)}`
+    ).join('\n');
+    const wLines = doneSaleItems
+      .filter(i => !i.is_gift && (i.product.warranty_months ?? 0) > 0)
+      .map(i => `  ${i.product.name.slice(0, 28)} — ${i.product.warranty_months}m`)
+      .join('\n');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comprovante ${saleLabel(doneSale)}</title>
+    <style>body{font-family:'Courier New',monospace;width:80mm;padding:12px;font-size:12px;color:#000}
+    .c{text-align:center}.b{font-weight:bold}.d{border-top:1px dashed #000;margin:6px 0}
+    .r{display:flex;justify-content:space-between}pre{font-family:inherit;font-size:11px;white-space:pre-wrap;margin:4px 0}</style>
+    </head><body>
+    <div class="c b" style="font-size:15px">${storeName}</div>
+    <div class="c" style="font-size:10px">COMPROVANTE DE VENDA</div>
+    <div class="d"></div>
+    <div class="r"><span>Nº</span><span>${saleLabel(doneSale)}</span></div>
+    <div class="r"><span>Data</span><span>${date}</span></div>
+    ${customer ? `<div class="r"><span>Cliente</span><span>${customer.name}</span></div>` : ''}
+    <div class="d"></div>
+    <pre>${lines}</pre>
+    <div class="d"></div>
+    <div class="r"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+    ${globalDisc > 0 ? `<div class="r"><span>Desconto</span><span>- ${fmt(globalDisc)}</span></div>` : ''}
+    <div class="r b"><span>TOTAL</span><span>${fmt(doneSale.total)}</span></div>
+    <div class="r"><span>Pagamento</span><span>${PM.find(m => m.id === pm)?.label || pm}</span></div>
+    ${pm === 'cash' && change > 0 ? `<div class="r"><span>Troco</span><span>${fmt(change)}</span></div>` : ''}
+    ${wLines ? `<div class="d"></div><div class="b" style="font-size:11px">GARANTIAS EMITIDAS</div><pre style="font-size:10px">${wLines}</pre>` : ''}
+    <div class="d"></div>
+    <div class="c" style="font-size:10px">Obrigado pela preferência!</div>
+    </body></html>`;
+    const w = window.open('', '_blank', 'width=420,height=640');
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
+  }
+
   if (doneSale) return (
     <div className="animate-fade-in" style={{ maxWidth: 520, margin: '4rem auto' }}>
       <div className="card" style={{ textAlign: 'center', padding: '2.5rem' }}>
@@ -284,17 +354,28 @@ export default function PDVPage() {
         <p style={{ color: 'var(--kdl-text-muted)', marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: '1.1rem' }}>
           {saleLabel(doneSale)}
         </p>
-        <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2rem', fontWeight: 900, color: '#00D4AA', marginBottom: pm === 'cash' && change > 0 ? '0.5rem' : '2rem' }}>
+        <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2rem', fontWeight: 900, color: '#00D4AA', marginBottom: '0.5rem' }}>
           {fmt(doneSale.total)}
         </p>
         {pm === 'cash' && change > 0 && (
-          <div className="alert alert-success" style={{ marginBottom: '2rem', justifyContent: 'center' }}>
+          <div className="alert alert-success" style={{ marginBottom: '0.75rem', justifyContent: 'center' }}>
             💵 Troco: <strong>{fmt(change)}</strong>
           </div>
         )}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          {warrantiesIssued > 0 && (
+            <span className="badge badge-success">🛡️ {warrantiesIssued} garantia{warrantiesIssued > 1 ? 's' : ''} emitida{warrantiesIssued > 1 ? 's' : ''}</span>
+          )}
+          {pointsEarned > 0 && customer && (
+            <span className="badge badge-info">⭐ +{pointsEarned} pontos KDL</span>
+          )}
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button className="btn btn-primary btn-lg" style={{ justifyContent: 'center' }} onClick={newSale}>
             🛒 Nova Venda
+          </button>
+          <button className="btn btn-secondary" style={{ justifyContent: 'center' }} onClick={printReceipt}>
+            🖨️ Imprimir Comprovante
           </button>
           {customer?.phone && (
             <a
@@ -304,6 +385,13 @@ export default function PDVPage() {
               target="_blank"
               rel="noreferrer"
             >📲 Enviar comprovante WhatsApp</a>
+          )}
+          {customer && (
+            <a
+              className="btn btn-ghost"
+              style={{ justifyContent: 'center' }}
+              href={`/app/os?sale=${saleLabel(doneSale)}&customer=${encodeURIComponent(customer.name)}`}
+            >🔧 Criar OS de Instalação</a>
           )}
         </div>
       </div>
@@ -479,6 +567,9 @@ export default function PDVPage() {
                   <div>
                     <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{customer.name}</p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-muted)' }}>{customer.phone}</p>
+                    {(customer.loyalty_points ?? 0) > 0 && (
+                      <p style={{ fontSize: '0.7rem', color: '#F59E0B', fontWeight: 600, marginTop: 2 }}>⭐ {customer.loyalty_points} pontos KDL</p>
+                    )}
                   </div>
                   <button className="btn btn-ghost btn-sm" onClick={() => setCustomer(null)}>✕</button>
                 </div>

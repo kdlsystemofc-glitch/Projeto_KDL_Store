@@ -54,12 +54,37 @@ export default function OSPage() {
     e.preventDefault(); setSaving(true);
     const payload: any = { ...form, price: Number(form.price), tenant_id: tenantId };
     if (form.status === 'completed' && editing?.status !== 'completed') payload.completed_at = new Date().toISOString();
-    if (editing) {
-      const { data } = await supabase.from('service_orders').update(payload).eq('id', editing.id).select('*, customers(name,phone), users(name)').single();
-      if (data) setList(prev => prev.map(o => o.id === data.id ? data as OS : o));
-    } else {
-      const { data } = await supabase.from('service_orders').insert(payload).select('*, customers(name,phone), users(name)').single();
-      if (data) setList(prev => [data as OS, ...prev]);
+
+    let resultData: any = null;
+    let attempts = 0;
+    while (!resultData && attempts < 10) {
+      attempts++;
+      const res = editing
+        ? await supabase.from('service_orders').update(payload).eq('id', editing.id).select('*, customers(name,phone), users(name)').single()
+        : await supabase.from('service_orders').insert(payload).select('*, customers(name,phone), users(name)').single();
+      if (res.error) {
+        const match = res.error.message.match(/'([^']+)' column/);
+        if (match?.[1]) { delete payload[match[1]]; continue; }
+        alert('Erro ao salvar OS: ' + res.error.message);
+        setSaving(false);
+        return;
+      }
+      resultData = res.data;
+    }
+
+    if (resultData) {
+      if (editing) {
+        setList(prev => prev.map(o => o.id === resultData.id ? resultData as OS : o));
+        if (form.status === 'billed' && editing.status !== 'billed' && Number(form.price) > 0) {
+          await supabase.from('cash_transactions').insert({
+            tenant_id: tenantId, type: 'in', amount: Number(form.price),
+            description: `OS #${resultData.id.slice(0, 6).toUpperCase()} — ${resultData.customers?.name || 'Cliente'}`,
+            reference_id: resultData.id, reference_type: 'os', user_id: userId || null,
+          });
+        }
+      } else {
+        setList(prev => [resultData as OS, ...prev]);
+      }
     }
     setSaving(false); setShowModal(false);
   }
@@ -69,6 +94,13 @@ export default function OSPage() {
     if (newStatus === 'completed') payload.completed_at = new Date().toISOString();
     await supabase.from('service_orders').update(payload).eq('id', os.id);
     setList(prev => prev.map(o => o.id === os.id ? { ...o, ...payload } : o));
+    if (newStatus === 'billed' && os.status !== 'billed' && os.price > 0) {
+      await supabase.from('cash_transactions').insert({
+        tenant_id: tenantId, type: 'in', amount: os.price,
+        description: `OS #${os.id.slice(0, 6).toUpperCase()} — ${os.customers?.name || 'Cliente'}`,
+        reference_id: os.id, reference_type: 'os', user_id: userId || null,
+      });
+    }
   }
 
   const filtered = list.filter(o => {

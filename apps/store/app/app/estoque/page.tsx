@@ -14,7 +14,7 @@ type Supplier = { id: string; name: string };
 
 export default function EstoquePage() {
   const supabase = createClient();
-  const { tenantId } = useTenant();
+  const { tenantId, userId } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -133,17 +133,15 @@ export default function EstoquePage() {
     if (!showMovModal) return;
     if (!movReason.trim()) { alert('Motivo é obrigatório'); return; }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // Auto-heal support for movement inserts
+
     let success = false;
     let attempts = 0;
     const payload: any = {
       tenant_id: tenantId, product_id: showMovModal.id, type: movType,
-      qty: movType === 'loss' ? -Math.abs(movQty) : movQty, // Adjustment uses absolute qty set by user as the final target
-      reason: movReason, user_id: user!.id,
+      qty: movType === 'loss' ? -Math.abs(movQty) : movQty,
+      reason: movReason, user_id: userId || null,
     };
-    if (movType === 'adjustment') payload.qty = movQty - showMovModal.stock_qty; // For adjustment, qty is the delta
+    if (movType === 'adjustment') payload.qty = movQty - showMovModal.stock_qty;
 
     while (!success && attempts < 5) {
       attempts++;
@@ -167,13 +165,11 @@ export default function EstoquePage() {
     if (!entryItems.length) { alert('Adicione pelo menos um produto'); return; }
     if (entryItems.some(i => !i.product_id || i.qty <= 0)) { alert('Preencha os produtos corretamente'); return; }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // Insert all movements
+
     const movements = entryItems.map(item => ({
       tenant_id: tenantId, product_id: item.product_id, type: 'entry',
       qty: item.qty, unit_cost: item.cost, supplier_id: entrySupplier || null,
-      reference: entryReference, reason: 'Entrada de mercadoria', user_id: user!.id
+      reference: entryReference, reason: 'Entrada de mercadoria', user_id: userId || null,
     }));
     
     // Auto-heal array

@@ -402,7 +402,7 @@ export default function GarantiasPage() {
                 <button
                   className="btn btn-danger"
                   style={{ flex: 1, justifyContent: 'center' }}
-                  onClick={() => { openClaim(viewing); setViewing(null); }}
+                  onClick={() => openClaim(viewing)}
                 >⚡ Acionar</button>
               )}
             </div>

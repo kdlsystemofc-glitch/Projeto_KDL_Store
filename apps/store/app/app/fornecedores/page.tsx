@@ -148,7 +148,9 @@ export default function FornecedoresPage() {
   }
 
   function buildWhatsAppMsg(s: Supplier, o: any) {
-    const msg = `Olá${s.contact_name ? ` ${s.contact_name}` : ''}! Segue pedido #${o.id.slice(0,6)}:\n\n${o.product_description}\n\nQtd: ${o.qty} un${o.notes ? `\nObs: ${o.notes}` : ''}`;
+    let parsedNotes = '';
+    try { const n = JSON.parse(o.notes); parsedNotes = n.notes || ''; } catch { parsedNotes = o.notes || ''; }
+    const msg = `Olá${s.contact_name ? ` ${s.contact_name}` : ''}! Segue pedido #${o.id.slice(0,6)}:\n\n${o.product_description}\n\nQtd: ${o.qty} un${parsedNotes ? `\nObs: ${parsedNotes}` : ''}`;
     return `https://wa.me/55${(s.whatsapp || s.phone).replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
   }
 
@@ -187,7 +189,7 @@ export default function FornecedoresPage() {
                       <button id={`forn-order-${s.id.slice(0,6)}`} className="btn btn-primary btn-sm" onClick={e => { e.stopPropagation(); openOrder(s); }}>📦 Pedir</button>
                     </div>
                   </div>
-                  {s.payment_terms && <p style={{ fontSize: '0.72rem', color: 'var(--kdl-text-dim)', marginTop: 4 }}>💳 {s.payment_terms} · ⏱ {s.avg_delivery_days}d</p>}
+                  {s.payment_terms && <p style={{ fontSize: '0.72rem', color: 'var(--kdl-text-dim)', marginTop: 4 }}>💳 {s.payment_terms}</p>}
                 </div>
               ))}
           </div>
