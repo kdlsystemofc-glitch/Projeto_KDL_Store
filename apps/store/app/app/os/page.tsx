@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useTenant } from '../context';
 
-type OS = { id: string; status: string; description: string; price: number; created_at: string; estimated_date: string; due_date: string; completed_at: string | null; customer_id: string; technician_id: string; customers: { name: string; phone: string } | null; users: { name: string } | null; };
+type OS = { id: string; status: string; description: string; price: number; created_at: string; estimated_date: string; due_date: string; completed_at: string | null; customer_id: string; technician_id: string; sale_id?: string | null; customers: { name: string; phone: string } | null; users: { name: string } | null; };
 
 const PIPELINE = [
   { key: 'quote',       label: 'Orçamento',   color: '#888',    badge: 'badge-gray' },
@@ -29,7 +29,30 @@ export default function OSPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<OS | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ customer_id: '', technician_id: '', description: '', price: 0, estimated_date: '', due_date: '', status: 'quote' });
+  const [form, setForm] = useState({ customer_id: '', technician_id: '', description: '', price: 0, estimated_date: '', due_date: '', status: 'quote', sale_id: '' });
+
+  useEffect(() => {
+    // Pre-fill from PDV "Criar OS" link (?sale_id=...&customer_name=...&sale_label=...)
+    const params = new URLSearchParams(window.location.search);
+    const saleId = params.get('sale_id');
+    const saleLbl = params.get('sale_label');
+    const custName = params.get('customer');
+    if (saleId) {
+      setForm(f => ({ ...f, sale_id: saleId, description: `Instalação — Venda ${saleLbl || saleId.slice(0, 6)}` }));
+      setShowModal(true);
+    }
+    if (custName) {
+      // Will match customer after load completes (handled below via ref)
+    }
+  }, []);
+
+  const [pendingCustomerName, setPendingCustomerName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const custName = params.get('customer');
+    if (custName) setPendingCustomerName(custName);
+  }, []);
 
   useEffect(() => {
     if (!tenantId) return;
@@ -43,16 +66,23 @@ export default function OSPage() {
       setCustomers(cust.data || []);
       setUsers(usrs.data || []);
       setLoading(false);
+      // Match pending customer name from URL param
+      if (pendingCustomerName) {
+        const match = (cust.data || []).find((c: any) => c.name.toLowerCase() === pendingCustomerName.toLowerCase());
+        if (match) setForm(f => ({ ...f, customer_id: match.id }));
+        setPendingCustomerName(null);
+      }
     }
     load();
   }, [tenantId]);
 
-  function openNew() { setEditing(null); setForm({ customer_id: '', technician_id: '', description: '', price: 0, estimated_date: '', due_date: '', status: 'quote' }); setShowModal(true); }
-  function openEdit(os: OS) { setEditing(os); setForm({ customer_id: os.customer_id, technician_id: os.technician_id || '', description: os.description, price: os.price, estimated_date: os.estimated_date || '', due_date: os.due_date || '', status: os.status }); setShowModal(true); }
+  function openNew() { setEditing(null); setForm({ customer_id: '', technician_id: '', description: '', price: 0, estimated_date: '', due_date: '', status: 'quote', sale_id: '' }); setShowModal(true); }
+  function openEdit(os: OS) { setEditing(os); setForm({ customer_id: os.customer_id, technician_id: os.technician_id || '', description: os.description, price: os.price, estimated_date: os.estimated_date || '', due_date: os.due_date || '', status: os.status, sale_id: os.sale_id || '' }); setShowModal(true); }
 
   async function saveOS(e: React.FormEvent) {
     e.preventDefault(); setSaving(true);
-    const payload: any = { ...form, price: Number(form.price), tenant_id: tenantId };
+    const payload: any = { ...form, price: Number(form.price), tenant_id: tenantId, sale_id: form.sale_id || null };
+    if (!payload.sale_id) delete payload.sale_id;
     if (form.status === 'completed' && editing?.status !== 'completed') payload.completed_at = new Date().toISOString();
 
     let resultData: any = null;

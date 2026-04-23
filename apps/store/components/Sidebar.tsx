@@ -25,6 +25,7 @@ const NAV = [
     items: [
       { href: '/app/os', label: 'Ordens de Serviço', icon: '🔧' },
       { href: '/app/garantias', label: 'Garantias', icon: '🛡️' },
+      { href: '/app/agenda', label: 'Agenda', icon: '📅' },
     ],
   },
   {

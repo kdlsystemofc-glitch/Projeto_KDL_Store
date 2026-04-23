@@ -9,6 +9,7 @@ type Product = {
   cost_price: number; sale_price: number; stock_qty: number;
   min_stock: number; unit: string; is_active: boolean; warranty_months: number;
 };
+type ProductVariant = { id: string; product_id: string; name: string; sku: string; stock_qty: number; sale_price: number | null; cost_price: number | null; is_active: boolean };
 type Category = { id: string; name: string };
 type Supplier = { id: string; name: string };
 
@@ -44,6 +45,11 @@ export default function EstoquePage() {
   const [newCatName, setNewCatName] = useState('');
   const [savingCat, setSavingCat] = useState(false);
 
+  // States for Variants
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [variantForm, setVariantForm] = useState({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
+  const [savingVariant, setSavingVariant] = useState(false);
+
   const [form, setForm] = useState({
     name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0,
     stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0,
@@ -67,12 +73,17 @@ export default function EstoquePage() {
 
   function openNew() {
     setEditing(null);
+    setVariants([]);
+    setVariantForm({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
     setForm({ name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0, stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0 });
     setShowModal(true);
   }
-  function openEdit(p: Product) {
+  async function openEdit(p: Product) {
     setEditing(p);
     setForm({ name: p.name, sku: p.sku || '', category_id: p.category_id || '', supplier_id: p.supplier_id || '', cost_price: p.cost_price, sale_price: p.sale_price, stock_qty: p.stock_qty, min_stock: p.min_stock, unit: p.unit, warranty_months: p.warranty_months || 0 });
+    setVariantForm({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
+    const { data: vdata } = await supabase.from('product_variants').select('*').eq('product_id', p.id).order('name');
+    setVariants(vdata || []);
     setShowModal(true);
   }
 
@@ -113,6 +124,44 @@ export default function EstoquePage() {
       setShowModal(false);
     }
     setSaving(false);
+  }
+
+  async function addVariant(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editing || !variantForm.name.trim()) return;
+    setSavingVariant(true);
+    const payload: any = {
+      tenant_id: tenantId, product_id: editing.id,
+      name: variantForm.name.trim(),
+      sku: variantForm.sku || null,
+      stock_qty: Number(variantForm.stock_qty),
+      sale_price: variantForm.sale_price ? Number(variantForm.sale_price) : null,
+      cost_price: variantForm.cost_price ? Number(variantForm.cost_price) : null,
+      is_active: true,
+    };
+    let resultData: any = null;
+    let attempts = 0;
+    while (!resultData && attempts < 10) {
+      attempts++;
+      const res = await supabase.from('product_variants').insert(payload).select().single();
+      if (res.error) {
+        const col = res.error.message.match(/'([^']+)' column/)?.[1];
+        if (col) { delete payload[col]; continue; }
+        alert('Erro: ' + res.error.message); setSavingVariant(false); return;
+      }
+      resultData = res.data;
+    }
+    if (resultData) {
+      setVariants(prev => [...prev, resultData].sort((a, b) => a.name.localeCompare(b.name)));
+      setVariantForm({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
+    }
+    setSavingVariant(false);
+  }
+
+  async function removeVariant(v: ProductVariant) {
+    if (!confirm(`Remover variação "${v.name}"?`)) return;
+    await supabase.from('product_variants').delete().eq('id', v.id);
+    setVariants(prev => prev.filter(x => x.id !== v.id));
   }
 
   async function saveCategory(e: React.FormEvent) {
@@ -373,6 +422,51 @@ export default function EstoquePage() {
               {form.sale_price > 0 && form.cost_price > 0 && (
                 <div className="alert alert-info">💡 Margem: {((form.sale_price - form.cost_price) / form.sale_price * 100).toFixed(1)}% · Lucro por unidade: {(form.sale_price - form.cost_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
               )}
+
+              {/* Variações (Grade) — só visível ao editar produto existente */}
+              {editing && (
+                <div style={{ borderTop: '1px solid var(--kdl-border)', paddingTop: '1.25rem' }}>
+                  <p style={{ fontWeight: 700, fontFamily: 'Outfit, sans-serif', fontSize: '0.9rem', marginBottom: '0.875rem' }}>🎨 Grade de Variações <span style={{ fontWeight: 400, fontSize: '0.78rem', color: 'var(--kdl-text-muted)' }}>(cor, tamanho, modelo...)</span></p>
+                  {variants.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: '1rem' }}>
+                      {variants.map(v => (
+                        <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', background: 'var(--kdl-surface-2)', borderRadius: 8, fontSize: '0.85rem' }}>
+                          <div>
+                            <span style={{ fontWeight: 600 }}>{v.name}</span>
+                            {v.sku && <span style={{ color: 'var(--kdl-text-dim)', marginLeft: 8, fontSize: '0.75rem' }}>SKU: {v.sku}</span>}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <span className={`badge ${v.stock_qty > 0 ? 'badge-success' : 'badge-danger'}`}>{v.stock_qty} un</span>
+                            {v.sale_price && <span style={{ color: '#00D4AA', fontWeight: 700 }}>{v.sale_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>}
+                            <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--kdl-danger)' }} onClick={() => removeVariant(v)}>✕</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <form onSubmit={addVariant} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'flex-end' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.72rem' }}>Nome da variação *</label>
+                      <input type="text" className="form-input" value={variantForm.name} onChange={e => setVariantForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: P / Azul" required />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.72rem' }}>Estoque</label>
+                      <input type="number" min={0} className="form-input" value={variantForm.stock_qty} onChange={e => setVariantForm(f => ({ ...f, stock_qty: Number(e.target.value) }))} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.72rem' }}>Preço (R$)</label>
+                      <input type="number" min={0} step={0.01} className="form-input" value={variantForm.sale_price} onChange={e => setVariantForm(f => ({ ...f, sale_price: e.target.value }))} placeholder="Padrão" />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.72rem' }}>SKU</label>
+                      <input type="text" className="form-input" value={variantForm.sku} onChange={e => setVariantForm(f => ({ ...f, sku: e.target.value }))} />
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-sm" disabled={savingVariant} style={{ alignSelf: 'flex-end' }}>{savingVariant ? '...' : '+ Add'}</button>
+                  </form>
+                  {!variants.length && <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-dim)', marginTop: 6 }}>Salve o produto primeiro, depois adicione variações. No PDV um seletor aparecerá automaticamente.</p>}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                 <button id="produto-save" type="submit" className="btn btn-primary" disabled={saving}>

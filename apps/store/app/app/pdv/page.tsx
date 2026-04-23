@@ -1,11 +1,13 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useTenant } from '../context';
 
 type Product  = { id: string; name: string; sku: string; sale_price: number; cost_price: number; stock_qty: number; warranty_months?: number };
+type Variant  = { id: string; product_id: string; name: string; sku: string | null; stock_qty: number; sale_price: number | null; cost_price: number | null };
 type Customer = { id: string; name: string; phone: string; cpf_cnpj: string; loyalty_points?: number };
-type CartItem = { product: Product; qty: number; unit_price: number; discount: number; is_gift: boolean };
+type CartItem = { product: Product; qty: number; unit_price: number; discount: number; is_gift: boolean; variantId?: string | null; variantName?: string | null };
+type DiscountRule = { id: string; name: string; min_qty: number | null; min_amount: number | null; discount_pct: number; is_active: boolean };
 type Sale     = { id: string; sale_number?: number; total: number; payment_method: string; created_at: string; status: string; customer?: { name: string } | null };
 
 const PM = [
@@ -56,11 +58,17 @@ export default function PDVPage() {
   const [warrantiesIssued, setWarrantiesIssued] = useState(0);
   const [pointsEarned,    setPointsEarned]    = useState(0);
 
+  // Fase 8: variantes, desconto progressivo, fidelidade
+  const [variantsMap,    setVariantsMap]    = useState<Record<string, Variant[]>>({});
+  const [discountRules,  setDiscountRules]  = useState<DiscountRule[]>([]);
+  const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
+  const [usePoints,      setUsePoints]      = useState(false);
+
   useEffect(() => {
     if (!tenantId) return;
     async function load() {
       const today = new Date().toISOString().split('T')[0];
-      const [p, c, s] = await Promise.all([
+      const [p, c, s, v, dr] = await Promise.all([
         supabase.from('products').select('id,name,sku,sale_price,cost_price,stock_qty,warranty_months').eq('tenant_id', tenantId).eq('is_active', true),
         supabase.from('customers').select('id,name,phone,cpf_cnpj,loyalty_points').eq('tenant_id', tenantId),
         supabase.from('sales')
@@ -70,10 +78,19 @@ export default function PDVPage() {
           .in('status', ['completed'])
           .order('created_at', { ascending: false })
           .limit(30),
+        supabase.from('product_variants').select('*').eq('tenant_id', tenantId).eq('is_active', true),
+        supabase.from('discount_rules').select('*').eq('tenant_id', tenantId).eq('is_active', true),
       ]);
       setProducts(p.data || []);
       setCustomers(c.data || []);
       setTodaySales((s.data || []) as Sale[]);
+      // Build variants map grouped by product_id
+      const vmap: Record<string, Variant[]> = {};
+      for (const variant of (v.data || [])) {
+        (vmap[variant.product_id] ||= []).push(variant);
+      }
+      setVariantsMap(vmap);
+      setDiscountRules(dr.data || []);
     }
     load();
   }, [tenantId]);
@@ -96,13 +113,31 @@ export default function PDVPage() {
     ).slice(0, 5));
   }, [cQuery, customers]);
 
-  function addToCart(p: Product, gift = false) {
+  function addToCart(p: Product, gift = false, variant?: Variant | null) {
     setCart(prev => {
-      const ex = prev.find(i => i.product.id === p.id && !i.is_gift && !gift);
-      if (ex) return prev.map(i => i.product.id === p.id && !i.is_gift && !gift ? { ...i, qty: i.qty + 1 } : i);
-      return [...prev, { product: p, qty: 1, unit_price: gift ? 0 : p.sale_price, discount: 0, is_gift: gift }];
+      const key = variant ? `${p.id}::${variant.id}` : p.id;
+      const ex = prev.find(i => {
+        const iKey = i.variantId ? `${i.product.id}::${i.variantId}` : i.product.id;
+        return iKey === key && !i.is_gift && !gift;
+      });
+      const price = gift ? 0 : (variant?.sale_price ?? p.sale_price);
+      if (ex) return prev.map(i => {
+        const iKey = i.variantId ? `${i.product.id}::${i.variantId}` : i.product.id;
+        return iKey === key && !i.is_gift && !gift ? { ...i, qty: i.qty + 1 } : i;
+      });
+      return [...prev, { product: p, qty: 1, unit_price: price, discount: 0, is_gift: gift, variantId: variant?.id || null, variantName: variant?.name || null }];
     });
+    setPendingProduct(null);
     setQuery(''); setFiltered([]); ref.current?.focus();
+  }
+
+  function handleProductSelect(p: Product, gift = false) {
+    const pvariants = variantsMap[p.id] || [];
+    if (!gift && pvariants.length > 0) {
+      setPendingProduct(p);
+    } else {
+      addToCart(p, gift);
+    }
   }
 
   function upd(i: number, f: 'qty' | 'discount' | 'unit_price', v: number) {
@@ -110,8 +145,25 @@ export default function PDVPage() {
   }
 
   const subtotal = cart.reduce((s, i) => s + i.unit_price * i.qty - i.discount, 0);
-  const total    = Math.max(0, subtotal - globalDisc);
-  const change   = pm === 'cash' ? Math.max(0, cashReceived - total) : 0;
+
+  // Auto-desconto progressivo
+  const { autoDiscount, activeRuleName } = useMemo(() => {
+    const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+    const matching = discountRules.filter(r =>
+      (r.min_amount != null && subtotal >= r.min_amount) ||
+      (r.min_qty != null && totalQty >= r.min_qty)
+    );
+    if (!matching.length) return { autoDiscount: 0, activeRuleName: '' };
+    const best = matching.reduce((a, b) => a.discount_pct >= b.discount_pct ? a : b);
+    return { autoDiscount: subtotal * (best.discount_pct / 100), activeRuleName: best.name };
+  }, [discountRules, subtotal, cart]);
+
+  // Desconto por pontos (100 pts = R$1)
+  const loyaltyAvailable = customer?.loyalty_points ?? 0;
+  const loyaltyDiscount  = usePoints ? Math.min(loyaltyAvailable * 0.01, Math.max(0, subtotal - globalDisc - autoDiscount)) : 0;
+
+  const total  = Math.max(0, subtotal - globalDisc - autoDiscount - loyaltyDiscount);
+  const change = pm === 'cash' ? Math.max(0, cashReceived - total) : 0;
 
   async function quickAddCustomer(e: React.FormEvent) {
     e.preventDefault();
@@ -159,7 +211,7 @@ export default function PDVPage() {
       customer_id: customer?.id || null,
       seller_id: userId || null,
       subtotal,
-      discount: globalDisc,
+      discount: globalDisc + autoDiscount + loyaltyDiscount,
       total,
       payment_method: pm,
       installments: pm === 'credit' ? installments : 1,
@@ -193,12 +245,17 @@ export default function PDVPage() {
       discount:   i.discount,
       is_gift:    i.is_gift,
       subtotal:   i.unit_price * i.qty - i.discount,
+      variant_id: i.variantId || null,
     })));
 
-    // Decrementa estoque
+    // Decrementa estoque (produto pai ou variante)
     for (const item of cart) {
       if (!item.is_gift) {
-        await supabase.rpc('decrement_stock', { p_product_id: item.product.id, p_qty: item.qty });
+        if (item.variantId) {
+          await supabase.rpc('decrement_variant_stock', { p_variant_id: item.variantId, p_qty: item.qty });
+        } else {
+          await supabase.rpc('decrement_stock', { p_product_id: item.product.id, p_qty: item.qty });
+        }
       }
     }
 
@@ -254,11 +311,17 @@ export default function PDVPage() {
       }
     }
 
-    // Pontos de fidelidade: 1 ponto por R$1 gasto
+    // Pontos de fidelidade: resgate (se usou) + acúmulo
     let pts = 0;
-    if (customer && total > 0) {
-      pts = Math.floor(total);
-      await supabase.rpc('add_loyalty_points', { p_customer_id: customer.id, p_points: pts });
+    if (customer) {
+      if (usePoints && loyaltyDiscount > 0) {
+        const pointsUsed = Math.ceil(loyaltyDiscount * 100);
+        await supabase.rpc('deduct_loyalty_points', { p_customer_id: customer.id, p_points: pointsUsed });
+      }
+      if (total > 0) {
+        pts = Math.floor(total);
+        await supabase.rpc('add_loyalty_points', { p_customer_id: customer.id, p_points: pts });
+      }
     }
 
     // Atualiza estoque local
@@ -306,6 +369,7 @@ export default function PDVPage() {
   function newSale() {
     setCart([]); setCustomer(null); setGlobalDisc(0); setPm('cash');
     setInstallments(1); setCashReceived(0); setNotes(''); setDoneSale(null);
+    setUsePoints(false); setPendingProduct(null);
     setTab('pdv'); setTimeout(() => ref.current?.focus(), 100);
   }
 
@@ -390,7 +454,7 @@ export default function PDVPage() {
             <a
               className="btn btn-ghost"
               style={{ justifyContent: 'center' }}
-              href={`/app/os?sale=${saleLabel(doneSale)}&customer=${encodeURIComponent(customer.name)}`}
+              href={`/app/os?sale_id=${doneSale.id}&sale_label=${encodeURIComponent(saleLabel(doneSale))}&customer=${encodeURIComponent(customer.name)}`}
             >🔧 Criar OS de Instalação</a>
           )}
         </div>
@@ -474,10 +538,12 @@ export default function PDVPage() {
               />
               {filtered.length > 0 && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--kdl-surface)', border: '1px solid var(--kdl-border)', borderRadius: 10, marginTop: 4, boxShadow: '0 16px 40px rgba(0,0,0,0.4)' }}>
-                  {filtered.map(p => (
+                  {filtered.map(p => {
+                    const pvars = variantsMap[p.id] || [];
+                    return (
                     <div
                       key={p.id}
-                      onClick={() => addToCart(p)}
+                      onClick={() => handleProductSelect(p)}
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--kdl-border)' }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--kdl-surface-2)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -485,8 +551,9 @@ export default function PDVPage() {
                       <div>
                         <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{p.name}</p>
                         <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-muted)' }}>
-                          {p.sku && `SKU: ${p.sku} · `}Estoque: {p.stock_qty}
-                          {(p.warranty_months ?? 0) > 0 && ` · 🛡️ ${p.warranty_months}m garantia`}
+                          {p.sku && `SKU: ${p.sku} · `}
+                          {pvars.length > 0 ? `🎨 ${pvars.length} variações` : `Estoque: ${p.stock_qty}`}
+                          {(p.warranty_months ?? 0) > 0 && ` · 🛡️ ${p.warranty_months}m`}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -497,7 +564,7 @@ export default function PDVPage() {
                         >+ Brinde</button>
                       </div>
                     </div>
-                  ))}
+                  );})}
                 </div>
               )}
             </div>
@@ -530,6 +597,7 @@ export default function PDVPage() {
                             <tr key={i} style={{ borderTop: '1px solid var(--kdl-border)' }}>
                               <td style={{ padding: '0.5rem 0.75rem' }}>
                                 <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{item.product.name}</p>
+                                {item.variantName && <p style={{ fontSize: '0.72rem', color: 'var(--kdl-primary-light)' }}>🎨 {item.variantName}</p>}
                                 {item.is_gift && <span className="badge badge-warning" style={{ marginTop: 2 }}>🎁 Brinde</span>}
                               </td>
                               <td style={{ padding: '0.5rem', textAlign: 'center' }}>
@@ -564,11 +632,16 @@ export default function PDVPage() {
               <p style={{ fontWeight: 700, fontFamily: 'Outfit, sans-serif', marginBottom: '0.75rem', fontSize: '0.9rem' }}>👤 Cliente</p>
               {customer ? (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{customer.name}</p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-muted)' }}>{customer.phone}</p>
-                    {(customer.loyalty_points ?? 0) > 0 && (
-                      <p style={{ fontSize: '0.7rem', color: '#F59E0B', fontWeight: 600, marginTop: 2 }}>⭐ {customer.loyalty_points} pontos KDL</p>
+                    {loyaltyAvailable > 0 && (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, cursor: 'pointer', fontSize: '0.78rem' }}>
+                        <input type="checkbox" checked={usePoints} onChange={e => setUsePoints(e.target.checked)} />
+                        <span style={{ color: '#F59E0B', fontWeight: 600 }}>
+                          ⭐ {loyaltyAvailable} pts {usePoints ? `(−${fmt(loyaltyDiscount)})` : `= ${fmt(loyaltyAvailable * 0.01)} disponíveis`}
+                        </span>
+                      </label>
                     )}
                   </div>
                   <button className="btn btn-ghost btn-sm" onClick={() => setCustomer(null)}>✕</button>
@@ -615,12 +688,17 @@ export default function PDVPage() {
             {/* Resumo */}
             <div className="card">
               <p style={{ fontWeight: 700, fontFamily: 'Outfit, sans-serif', marginBottom: '0.875rem', fontSize: '0.9rem' }}>💰 Resumo</p>
+              {activeRuleName && (
+                <div className="alert alert-success" style={{ marginBottom: '0.75rem', fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}>
+                  🏷️ <strong>{activeRuleName}</strong> — −{fmt(autoDiscount)}
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
                   <span style={{ color: 'var(--kdl-text-muted)' }}>Subtotal</span><span>{fmt(subtotal)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
-                  <span style={{ color: 'var(--kdl-text-muted)' }}>Desc. global (R$)</span>
+                  <span style={{ color: 'var(--kdl-text-muted)' }}>Desc. manual (R$)</span>
                   <input
                     id="pdv-global-discount"
                     type="number"
@@ -631,6 +709,16 @@ export default function PDVPage() {
                     style={{ width: 90, textAlign: 'right', padding: '0.25rem 0.5rem', background: 'var(--kdl-surface-2)', border: '1px solid var(--kdl-border)', borderRadius: 6, color: '#F59E0B', fontSize: '0.85rem' }}
                   />
                 </div>
+                {autoDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#10B981' }}>
+                    <span>🏷️ Desc. automático</span><span>−{fmt(autoDiscount)}</span>
+                  </div>
+                )}
+                {loyaltyDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#F59E0B' }}>
+                    <span>⭐ Pontos KDL</span><span>−{fmt(loyaltyDiscount)}</span>
+                  </div>
+                )}
                 <div style={{ height: 1, background: 'var(--kdl-border)' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.25rem', fontFamily: 'Outfit, sans-serif' }}>
                   <span>Total</span><span style={{ color: '#00D4AA' }}>{fmt(total)}</span>
@@ -724,6 +812,36 @@ export default function PDVPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de seleção de variante (grade) */}
+      {pendingProduct && (
+        <div className="modal-overlay" onClick={() => setPendingProduct(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '0.5rem', fontSize: '1.1rem' }}>🎨 Selecionar Variação</h2>
+            <p style={{ color: 'var(--kdl-text-muted)', marginBottom: '1.25rem', fontSize: '0.875rem' }}>{pendingProduct.name}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
+              {(variantsMap[pendingProduct.id] || []).map(v => (
+                <button
+                  key={v.id}
+                  className="btn btn-secondary"
+                  style={{ flexDirection: 'column', alignItems: 'center', padding: '0.875rem 0.5rem', height: 'auto', opacity: v.stock_qty === 0 ? 0.4 : 1 }}
+                  disabled={v.stock_qty === 0}
+                  onClick={() => addToCart(pendingProduct, false, v)}
+                >
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{v.name}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--kdl-text-muted)', marginTop: 4 }}>
+                    {v.stock_qty > 0 ? `Estoque: ${v.stock_qty}` : 'Sem estoque'}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#00D4AA', marginTop: 4 }}>
+                    {fmt(v.sale_price ?? pendingProduct.sale_price)}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <button className="btn btn-ghost btn-sm" style={{ marginTop: '1rem', width: '100%', justifyContent: 'center' }} onClick={() => setPendingProduct(null)}>Cancelar</button>
           </div>
         </div>
       )}

@@ -16,7 +16,9 @@ export default function ConfiguracoesPage() {
   const supabase = createClient();
   const { tenantId } = useTenant();
 
-  const [tab, setTab]           = useState<'loja' | 'usuarios' | 'assinatura'>('loja');
+  type DiscountRule = { id: string; name: string; min_qty: number | null; min_amount: number | null; discount_pct: number; is_active: boolean };
+
+  const [tab, setTab]           = useState<'loja' | 'usuarios' | 'descontos' | 'assinatura'>('loja');
   const [tenant, setTenant]     = useState<{ name: string; slug: string } | null>(null);
   const [users, setUsers]       = useState<UserRow[]>([]);
   const [planInfo, setPlanInfo] = useState<{ name: string; price: number; status: string } | null>(null);
@@ -27,10 +29,17 @@ export default function ConfiguracoesPage() {
   const [savedMsg, setSavedMsg] = useState('');
   const [userError, setUserError] = useState('');
 
+  // Desconto progressivo
+  const [discountRules, setDiscountRules] = useState<DiscountRule[]>([]);
+  const [showRuleModal, setShowRuleModal] = useState(false);
+  const [editingRule, setEditingRule] = useState<DiscountRule | null>(null);
+  const [savingRule, setSavingRule] = useState(false);
+  const [ruleForm, setRuleForm] = useState({ name: '', min_qty: '', min_amount: '', discount_pct: '' });
+
   useEffect(() => {
     if (!tenantId) return;
     async function load() {
-      const [tenantRes, usersRes] = await Promise.all([
+      const [tenantRes, usersRes, rulesRes] = await Promise.all([
         supabase.from('tenants')
           .select('name, slug, status, plans(name, price_monthly)')
           .eq('id', tenantId)
@@ -39,6 +48,10 @@ export default function ConfiguracoesPage() {
           .select('id, name, email, role, is_active')
           .eq('tenant_id', tenantId)
           .order('name'),
+        supabase.from('discount_rules')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .order('min_amount', { ascending: true }),
       ]);
 
       if (tenantRes.data) {
@@ -58,6 +71,7 @@ export default function ConfiguracoesPage() {
           is_active: u.is_active ?? true,
         })));
       }
+      setDiscountRules(rulesRes.data || []);
     }
     load();
   }, [tenantId]);
@@ -106,6 +120,67 @@ export default function ConfiguracoesPage() {
     if (!error) setUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_active: newStatus } : x));
   }
 
+  function openNewRule() {
+    setEditingRule(null);
+    setRuleForm({ name: '', min_qty: '', min_amount: '', discount_pct: '' });
+    setShowRuleModal(true);
+  }
+  function openEditRule(r: DiscountRule) {
+    setEditingRule(r);
+    setRuleForm({ name: r.name, min_qty: r.min_qty != null ? String(r.min_qty) : '', min_amount: r.min_amount != null ? String(r.min_amount) : '', discount_pct: String(r.discount_pct) });
+    setShowRuleModal(true);
+  }
+
+  async function saveRule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!ruleForm.discount_pct || (!ruleForm.min_qty && !ruleForm.min_amount)) {
+      alert('Defina ao menos um gatilho (quantidade mínima ou valor mínimo) e o percentual de desconto.');
+      return;
+    }
+    setSavingRule(true);
+    const payload: any = {
+      name: ruleForm.name.trim() || `Desconto ${ruleForm.discount_pct}%`,
+      min_qty: ruleForm.min_qty ? Number(ruleForm.min_qty) : null,
+      min_amount: ruleForm.min_amount ? Number(ruleForm.min_amount) : null,
+      discount_pct: Number(ruleForm.discount_pct),
+      tenant_id: tenantId,
+      is_active: true,
+    };
+    let resultData: any = null;
+    let attempts = 0;
+    while (!resultData && attempts < 10) {
+      attempts++;
+      const res = editingRule
+        ? await supabase.from('discount_rules').update(payload).eq('id', editingRule.id).select().single()
+        : await supabase.from('discount_rules').insert(payload).select().single();
+      if (res.error) {
+        const col = res.error.message.match(/'([^']+)' column/)?.[1];
+        if (col) { delete payload[col]; continue; }
+        alert('Erro: ' + res.error.message);
+        setSavingRule(false);
+        return;
+      }
+      resultData = res.data;
+    }
+    if (resultData) {
+      if (editingRule) setDiscountRules(prev => prev.map(r => r.id === resultData.id ? resultData : r));
+      else setDiscountRules(prev => [...prev, resultData].sort((a, b) => (a.min_amount || 0) - (b.min_amount || 0)));
+    }
+    setSavingRule(false);
+    setShowRuleModal(false);
+  }
+
+  async function toggleRule(r: DiscountRule) {
+    await supabase.from('discount_rules').update({ is_active: !r.is_active }).eq('id', r.id);
+    setDiscountRules(prev => prev.map(x => x.id === r.id ? { ...x, is_active: !r.is_active } : x));
+  }
+
+  async function deleteRule(r: DiscountRule) {
+    if (!confirm(`Remover a regra "${r.name}"?`)) return;
+    await supabase.from('discount_rules').delete().eq('id', r.id);
+    setDiscountRules(prev => prev.filter(x => x.id !== r.id));
+  }
+
   return (
     <div className="animate-fade-in">
       <div style={{ marginBottom: '1.5rem' }}>
@@ -115,14 +190,14 @@ export default function ConfiguracoesPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: '1.5rem' }}>
-        {(['loja', 'usuarios', 'assinatura'] as const).map(t => (
+        {(['loja', 'usuarios', 'descontos', 'assinatura'] as const).map(t => (
           <button
             key={t}
             id={`cfg-tab-${t}`}
             onClick={() => setTab(t)}
             className={`btn ${tab === t ? 'btn-primary' : 'btn-secondary'}`}
           >
-            {t === 'loja' ? '🏪 Loja' : t === 'usuarios' ? '👥 Usuários' : '💳 Assinatura'}
+            {t === 'loja' ? '🏪 Loja' : t === 'usuarios' ? '👥 Usuários' : t === 'descontos' ? '🏷️ Descontos' : '💳 Assinatura'}
           </button>
         ))}
       </div>
@@ -239,6 +314,91 @@ export default function ConfiguracoesPage() {
                     <button id="usr-save" type="submit" className="btn btn-primary" disabled={saving}>
                       {saving ? 'Criando...' : 'Criar Usuário'}
                     </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Aba Descontos */}
+      {tab === 'descontos' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div>
+              <p style={{ color: 'var(--kdl-text-muted)', fontSize: '0.875rem' }}>Regras de desconto automático aplicadas no PDV quando o carrinho atinge o gatilho.</p>
+            </div>
+            <button className="btn btn-primary" onClick={openNewRule}>+ Nova Regra</button>
+          </div>
+          {!discountRules.length ? (
+            <div className="empty-state">
+              <span style={{ fontSize: '2.5rem' }}>🏷️</span>
+              <p>Nenhuma regra cadastrada.</p>
+              <p style={{ fontSize: '0.875rem', color: 'var(--kdl-text-muted)' }}>Ex: Compras acima de R$200 ganham 10% de desconto automático.</p>
+              <button className="btn btn-primary" style={{ marginTop: 8 }} onClick={openNewRule}>Criar primeira regra</button>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead><tr><th>Nome</th><th>Gatilho</th><th style={{ textAlign: 'right' }}>Desconto</th><th style={{ textAlign: 'center' }}>Status</th><th style={{ textAlign: 'center' }}>Ações</th></tr></thead>
+                <tbody>
+                  {discountRules.map(r => (
+                    <tr key={r.id}>
+                      <td style={{ fontWeight: 600 }}>{r.name}</td>
+                      <td style={{ color: 'var(--kdl-text-muted)', fontSize: '0.875rem' }}>
+                        {r.min_amount != null && `Subtotal ≥ ${r.min_amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
+                        {r.min_qty != null && `${r.min_qty ? (r.min_amount != null ? ' · ' : '') : ''}Qtd ≥ ${r.min_qty} itens`}
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#00D4AA' }}>{r.discount_pct}%</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className={`badge ${r.is_active ? 'badge-success' : 'badge-gray'}`}>{r.is_active ? 'Ativa' : 'Inativa'}</span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                          <button className="btn btn-ghost btn-sm" onClick={() => openEditRule(r)}>✏️</button>
+                          <button className={`btn btn-sm ${r.is_active ? 'btn-secondary' : 'btn-success'}`} onClick={() => toggleRule(r)}>{r.is_active ? 'Pausar' : 'Ativar'}</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteRule(r)}>🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {showRuleModal && (
+            <div className="modal-overlay" onClick={() => setShowRuleModal(false)}>
+              <div className="modal" onClick={e => e.stopPropagation()}>
+                <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '1.5rem' }}>{editingRule ? 'Editar Regra' : 'Nova Regra de Desconto'}</h2>
+                <form onSubmit={saveRule} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Nome da Regra</label>
+                    <input type="text" className="form-input" value={ruleForm.name} onChange={e => setRuleForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Desconto atacado, Promoção fim de semana..." />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Valor mínimo do carrinho (R$)</label>
+                      <input type="number" min={0} step={0.01} className="form-input" value={ruleForm.min_amount} onChange={e => setRuleForm(f => ({ ...f, min_amount: e.target.value }))} placeholder="Ex: 200.00" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Ou quantidade mínima (itens)</label>
+                      <input type="number" min={1} className="form-input" value={ruleForm.min_qty} onChange={e => setRuleForm(f => ({ ...f, min_qty: e.target.value }))} placeholder="Ex: 5" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Percentual de desconto (%) *</label>
+                    <input type="number" min={0.01} max={100} step={0.01} className="form-input" value={ruleForm.discount_pct} onChange={e => setRuleForm(f => ({ ...f, discount_pct: e.target.value }))} placeholder="Ex: 10" required />
+                  </div>
+                  {ruleForm.discount_pct && (ruleForm.min_amount || ruleForm.min_qty) && (
+                    <div className="alert alert-info">
+                      💡 {ruleForm.min_amount ? `Carrinho ≥ R$ ${ruleForm.min_amount}` : ''}{ruleForm.min_amount && ruleForm.min_qty ? ' ou ' : ''}{ruleForm.min_qty ? `${ruleForm.min_qty} ou mais itens` : ''} → <strong>{ruleForm.discount_pct}% de desconto automático no PDV</strong>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowRuleModal(false)}>Cancelar</button>
+                    <button type="submit" className="btn btn-primary" disabled={savingRule}>{savingRule ? 'Salvando...' : editingRule ? 'Salvar' : 'Criar Regra'}</button>
                   </div>
                 </form>
               </div>
