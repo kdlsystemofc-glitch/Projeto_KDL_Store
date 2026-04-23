@@ -1,0 +1,25 @@
+{
+  "name": "kdl-store",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.4.2",
+
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dev:landing": "turbo run dev --filter=@kdl/landing",
+    "dev:store": "turbo run dev --filter=@kdl/store",
+    "dev:admin": "turbo run dev --filter=@kdl/admin",
+    "build:landing": "turbo run build --filter=@kdl/landing",
+    "build:store": "turbo run build --filter=@kdl/store",
+    "build:admin": "turbo run build --filter=@kdl/admin"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0"
+  }
+}
