@@ -66,7 +66,15 @@ export default function GarantiasPage() {
 
   const today = new Date().toISOString().split('T')[0];
   const in30d = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
-  const filtered = list.filter(w => (!search || w.products?.name.toLowerCase().includes(search.toLowerCase()) || w.customers?.name.toLowerCase().includes(search.toLowerCase())) && (!filterStatus || w.status === filterStatus));
+  const filtered = list.filter(w => {
+    const q = search.toLowerCase();
+    return (!q || 
+      w.products?.name.toLowerCase().includes(q) || 
+      w.customers?.name.toLowerCase().includes(q) || 
+      w.warranty_code?.toLowerCase().includes(q) ||
+      w.id.toLowerCase().includes(q)) && 
+      (!filterStatus || w.status === filterStatus);
+  });
 
   function expiryInfo(w: Warranty) {
     const diff = Math.ceil((new Date(w.expiry_date).getTime() - Date.now()) / 86400000);

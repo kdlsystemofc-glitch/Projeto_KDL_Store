@@ -77,7 +77,12 @@ export default function OSPage() {
 
   const filtered = list.filter(o => {
     const q = search.toLowerCase();
-    return (!search || o.description.toLowerCase().includes(q) || o.customers?.name.toLowerCase().includes(q)) && (!filterStatus || o.status === filterStatus);
+    return (!q || 
+      o.description.toLowerCase().includes(q) || 
+      o.customers?.name.toLowerCase().includes(q) || 
+      o.id.toLowerCase().includes(q) || 
+      o.users?.name.toLowerCase().includes(q)) && 
+      (!filterStatus || o.status === filterStatus);
   });
 
   const today = new Date().toISOString().split('T')[0];

@@ -17,6 +17,7 @@ export default function FinanceiroPage() {
   const [receivables, setReceivables]   = useState<Receivable[]>([]);
   const [showPayModal, setShowPayModal] = useState(false);
   const [saving, setSaving]             = useState(false);
+  const [search, setSearch]             = useState('');
   const [payForm, setPayForm] = useState({ description: '', category: 'other', amount: 0, due_date: '' });
 
   useEffect(() => {
@@ -90,13 +91,16 @@ export default function FinanceiroPage() {
         ))}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: '1.25rem' }}>
+      {/* Tabs and Search */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: '1.25rem', alignItems: 'center' }}>
         {(['caixa', 'pagar', 'receber'] as const).map(t => (
-          <button key={t} id={`fin-tab-${t}`} onClick={() => setTab(t)} className={`btn ${tab === t ? 'btn-primary' : 'btn-secondary'}`} style={{ textTransform: 'capitalize' }}>
+          <button key={t} id={`fin-tab-${t}`} onClick={() => { setTab(t); setSearch(''); }} className={`btn ${tab === t ? 'btn-primary' : 'btn-secondary'}`} style={{ textTransform: 'capitalize' }}>
             {t === 'caixa' ? '💵 Fluxo de Caixa' : t === 'pagar' ? '📤 Contas a Pagar' : '📥 Contas a Receber'}
           </button>
         ))}
+        {tab !== 'caixa' && (
+          <input type="text" className="form-input" placeholder={tab === 'pagar' ? '🔍 Buscar conta ou categoria...' : '🔍 Buscar cliente...'} value={search} onChange={e => setSearch(e.target.value)} style={{ marginLeft: '1rem', maxWidth: 300 }} />
+        )}
         {tab === 'pagar' && <button id="fin-add-pay" className="btn btn-secondary" onClick={() => setShowPayModal(true)} style={{ marginLeft: 'auto' }}>+ Adicionar Conta</button>}
       </div>
 
@@ -124,54 +128,60 @@ export default function FinanceiroPage() {
       )}
 
       {/* A Pagar */}
-      {tab === 'pagar' && (
-        <div className="table-wrapper">
-          <table>
-            <thead><tr><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th style={{ textAlign: 'right' }}>Valor</th><th style={{ textAlign: 'center' }}>Status</th><th style={{ textAlign: 'center' }}>Ação</th></tr></thead>
-            <tbody>
-              {!payables.length ? <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--kdl-text-muted)' }}>Nenhuma conta a pagar</td></tr>
-                : payables.map(p => {
-                  const overdue = p.status === 'pending' && p.due_date < today;
-                  return (
-                    <tr key={p.id}>
-                      <td style={{ fontWeight: 600 }}>{p.description}</td>
-                      <td><span className="badge badge-gray">{p.category}</span></td>
-                      <td style={{ fontSize: '0.85rem', color: overdue ? '#EF4444' : 'var(--kdl-text-muted)', fontWeight: overdue ? 700 : 400 }}>{new Date(p.due_date).toLocaleDateString('pt-BR')}{overdue ? ' ⚠️' : ''}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#EF4444' }}>{fmt(p.amount)}</td>
-                      <td style={{ textAlign: 'center' }}><span className={`badge ${p.status === 'paid' ? 'badge-success' : overdue ? 'badge-danger' : 'badge-warning'}`}>{p.status === 'paid' ? 'Pago' : overdue ? 'Atrasado' : 'Pendente'}</span></td>
-                      <td style={{ textAlign: 'center' }}>{p.status === 'pending' && <button id={`pay-${p.id.slice(0,8)}`} className="btn btn-success btn-sm" onClick={() => markPaid('pay', p.id)}>✓ Pagar</button>}</td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {tab === 'pagar' && (() => {
+        const filteredPayables = payables.filter(p => !search || p.description.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
+        return (
+          <div className="table-wrapper">
+            <table>
+              <thead><tr><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th style={{ textAlign: 'right' }}>Valor</th><th style={{ textAlign: 'center' }}>Status</th><th style={{ textAlign: 'center' }}>Ação</th></tr></thead>
+              <tbody>
+                {!filteredPayables.length ? <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--kdl-text-muted)' }}>{search ? 'Nenhuma conta encontrada' : 'Nenhuma conta a pagar'}</td></tr>
+                  : filteredPayables.map(p => {
+                    const overdue = p.status === 'pending' && p.due_date < today;
+                    return (
+                      <tr key={p.id}>
+                        <td style={{ fontWeight: 600 }}>{p.description}</td>
+                        <td><span className="badge badge-gray">{p.category}</span></td>
+                        <td style={{ fontSize: '0.85rem', color: overdue ? '#EF4444' : 'var(--kdl-text-muted)', fontWeight: overdue ? 700 : 400 }}>{new Date(p.due_date).toLocaleDateString('pt-BR')}{overdue ? ' ⚠️' : ''}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#EF4444' }}>{fmt(p.amount)}</td>
+                        <td style={{ textAlign: 'center' }}><span className={`badge ${p.status === 'paid' ? 'badge-success' : overdue ? 'badge-danger' : 'badge-warning'}`}>{p.status === 'paid' ? 'Pago' : overdue ? 'Atrasado' : 'Pendente'}</span></td>
+                        <td style={{ textAlign: 'center' }}>{p.status === 'pending' && <button id={`pay-${p.id.slice(0,8)}`} className="btn btn-success btn-sm" onClick={() => markPaid('pay', p.id)} title="Marcar como pago">✓ Pagar</button>}</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
 
       {/* A Receber */}
-      {tab === 'receber' && (
-        <div className="table-wrapper">
-          <table>
-            <thead><tr><th>Cliente</th><th style={{ textAlign: 'center' }}>Parcela</th><th>Vencimento</th><th style={{ textAlign: 'right' }}>Valor</th><th style={{ textAlign: 'center' }}>Status</th><th style={{ textAlign: 'center' }}>Ação</th></tr></thead>
-            <tbody>
-              {!receivables.length ? <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--kdl-text-muted)' }}>Nenhuma conta a receber</td></tr>
-                : receivables.map(r => {
-                  const overdue = r.status === 'pending' && r.due_date < today;
-                  return (
-                    <tr key={r.id}>
-                      <td style={{ fontWeight: 600 }}>{r.customers?.name || '—'}</td>
-                      <td style={{ textAlign: 'center' }}><span className="badge badge-gray">#{r.installment_number}</span></td>
-                      <td style={{ fontSize: '0.85rem', color: overdue ? '#EF4444' : 'var(--kdl-text-muted)', fontWeight: overdue ? 700 : 400 }}>{new Date(r.due_date).toLocaleDateString('pt-BR')}{overdue ? ' ⚠️' : ''}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#6C47FF' }}>{fmt(r.amount)}</td>
-                      <td style={{ textAlign: 'center' }}><span className={`badge ${r.status === 'paid' ? 'badge-success' : overdue ? 'badge-danger' : 'badge-warning'}`}>{r.status === 'paid' ? 'Recebido' : overdue ? 'Atrasado' : 'Pendente'}</span></td>
-                      <td style={{ textAlign: 'center' }}>{r.status === 'pending' && <button id={`rec-${r.id.slice(0,8)}`} className="btn btn-primary btn-sm" onClick={() => markPaid('rec', r.id)}>✓ Receber</button>}</td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {tab === 'receber' && (() => {
+        const filteredReceivables = receivables.filter(r => !search || r.customers?.name.toLowerCase().includes(search.toLowerCase()));
+        return (
+          <div className="table-wrapper">
+            <table>
+              <thead><tr><th>Cliente</th><th style={{ textAlign: 'center' }}>Parcela</th><th>Vencimento</th><th style={{ textAlign: 'right' }}>Valor</th><th style={{ textAlign: 'center' }}>Status</th><th style={{ textAlign: 'center' }}>Ação</th></tr></thead>
+              <tbody>
+                {!filteredReceivables.length ? <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--kdl-text-muted)' }}>{search ? 'Nenhuma conta encontrada' : 'Nenhuma conta a receber'}</td></tr>
+                  : filteredReceivables.map(r => {
+                    const overdue = r.status === 'pending' && r.due_date < today;
+                    return (
+                      <tr key={r.id}>
+                        <td style={{ fontWeight: 600 }}>{r.customers?.name || '—'}</td>
+                        <td style={{ textAlign: 'center' }}><span className="badge badge-gray">#{r.installment_number}</span></td>
+                        <td style={{ fontSize: '0.85rem', color: overdue ? '#EF4444' : 'var(--kdl-text-muted)', fontWeight: overdue ? 700 : 400 }}>{new Date(r.due_date).toLocaleDateString('pt-BR')}{overdue ? ' ⚠️' : ''}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: '#6C47FF' }}>{fmt(r.amount)}</td>
+                        <td style={{ textAlign: 'center' }}><span className={`badge ${r.status === 'paid' ? 'badge-success' : overdue ? 'badge-danger' : 'badge-warning'}`}>{r.status === 'paid' ? 'Recebido' : overdue ? 'Atrasado' : 'Pendente'}</span></td>
+                        <td style={{ textAlign: 'center' }}>{r.status === 'pending' && <button id={`rec-${r.id.slice(0,8)}`} className="btn btn-primary btn-sm" onClick={() => markPaid('rec', r.id)} title="Marcar como recebido">✓ Receber</button>}</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
 
       {/* Add payable modal */}
       {showPayModal && (

@@ -86,7 +86,16 @@ export default function ClientesPage() {
 
   const filtered = customers.filter(c => {
     const q = search.toLowerCase();
-    return !q || c.name.toLowerCase().includes(q) || c.phone?.includes(q) || c.phone?.slice(-4).includes(q) || c.cpf_cnpj?.replace(/\D/g, '').includes(q.replace(/\D/g, '')) || c.email?.toLowerCase().includes(q);
+    const qDigits = q.replace(/\D/g, '');
+    const phoneDigits = c.phone?.replace(/\D/g, '') || '';
+    const phone2Digits = c.phone2?.replace(/\D/g, '') || '';
+    
+    return !q || 
+      c.name.toLowerCase().includes(q) || 
+      (qDigits && phoneDigits.includes(qDigits)) || 
+      (qDigits && phone2Digits.includes(qDigits)) || 
+      (qDigits && c.cpf_cnpj?.replace(/\D/g, '').includes(qDigits)) || 
+      c.email?.toLowerCase().includes(q);
   });
 
   const PM: Record<string, string> = { cash: 'Dinheiro', pix: 'Pix', card: 'Débito', credit: 'Crédito', credit_store: 'Fiado' };
@@ -116,7 +125,7 @@ export default function ClientesPage() {
                     <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>{c.name}</p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-muted)' }}>{c.phone}{c.cpf_cnpj ? ` · CPF: ${c.cpf_cnpj}` : ''}</p>
                   </div>
-                  <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(c); }}>✏️</button>
+                  <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openEdit(c); }} title="Editar cliente">✏️</button>
                 </div>
               ))}
           </div>
@@ -137,11 +146,11 @@ export default function ClientesPage() {
                     <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.1rem', marginBottom: 4 }}>{selected.name}</h2>
                     {selected.email && <p style={{ fontSize: '0.8rem', color: 'var(--kdl-text-muted)' }}>{selected.email}</p>}
                   </div>
-                  <button className="btn btn-ghost btn-sm" onClick={() => openEdit(selected)}>✏️ Editar</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => openEdit(selected)} title="Editar dados do cliente">✏️ Editar</button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {selected.phone && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}><span style={{ color: 'var(--kdl-text-muted)' }}>Telefone</span><a href={`tel:${selected.phone}`} style={{ color: 'var(--kdl-text)', textDecoration: 'none', fontWeight: 600 }}>{selected.phone}</a></div>}
-                  {selected.phone && <a href={`https://wa.me/55${selected.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" style={{ justifyContent: 'center' }}>📲 WhatsApp</a>}
+                  {selected.phone && <a href={`https://wa.me/55${selected.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" style={{ justifyContent: 'center' }} title="Abrir conversa no WhatsApp">📲 WhatsApp</a>}
                   {selected.cpf_cnpj && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}><span style={{ color: 'var(--kdl-text-muted)' }}>CPF/CNPJ</span><span>{selected.cpf_cnpj}</span></div>}
                   {selected.birthday && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}><span style={{ color: 'var(--kdl-text-muted)' }}>Aniversário</span><span>{new Date(selected.birthday + 'T00:00:00').toLocaleDateString('pt-BR')}</span></div>}
                   {selected.address && <div style={{ fontSize: '0.85rem', color: 'var(--kdl-text-muted)' }}>📍 {selected.address}</div>}
