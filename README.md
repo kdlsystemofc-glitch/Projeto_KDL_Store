@@ -61,6 +61,9 @@ pnpm dev:admin    # http://localhost:3002
 
 - ✅ Fase 1 — Fundação (Monorepo, estrutura, .gitignore)
 - ✅ Fase 2 — Landing Page
-- ✅ Fase 3 — App da Loja (Estoque avançado, Fornecedores, Auto-healing, Financeiro)
-- 🔄 Fase 4 — Portal Admin
-- ✅ Fase 5 — Documentação Final
+- ✅ Fase 3 — App da Loja (Estoque, Fornecedores, Auto-healing, Financeiro)
+- ✅ Fase 4 — Portal Admin
+- ✅ Fase 5 — TenantContext, números sequenciais, convite de usuários
+- ✅ Fase 6 — Garantias (código único), dashboard, correções gerais
+- ✅ Fase 7 — Fidelidade, catálogo público, OS↔venda, notificações WhatsApp
+- ✅ Fase 8 — Variações de produto (grade), Pets + Agenda, Regras de desconto progressivo

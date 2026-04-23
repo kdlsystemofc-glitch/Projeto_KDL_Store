@@ -1,42 +1,128 @@
-# KDL Store - Contexto de Desenvolvimento (AI_CONTEXT)
+# KDL Store — AI Context
 
-Este documento foi preparado para orientar futuros agentes de Inteligência Artificial ou desenvolvedores que trabalharão no projeto **KDL Store**, fornecendo um resumo do stack, regras de negócio arquiteturais e peculiaridades importantes do sistema.
+Guia essencial para agentes de IA ou desenvolvedores que continuarão o projeto.
 
-## 1. Visão Geral do Projeto
-A KDL Store é um ERP e PDV focado em lojas de som automotivo e eletrônicos, operando no modelo SaaS (Software as a Service) Multi-Tenant.
-O sistema é gerido no frontend via React (Next.js App Router) e no backend pelo Supabase (PostgreSQL + Auth + RLS).
+## 1. Visão Geral
 
-## 2. Tech Stack & Ferramentas
-* **Framework:** Next.js 14+ (App Router, diretório `apps/store/app/`)
-* **Linguagem:** TypeScript
-* **Estilização:** Vanilla CSS (`globals.css` com design system baseado em variáveis CSS `--kdl-*`). **Não** utiliza TailwindCSS.
-* **Backend & Database:** Supabase (Client-side usage `@supabase/supabase-js`)
-* **Gerenciamento de Pacotes:** `pnpm` gerenciando um monorepo via Turborepo (`apps/store` e `packages/`).
+KDL Store é um ERP/PDV SaaS multi-tenant para o pequeno comércio brasileiro.
+Monorepo Turborepo + pnpm com três apps Next.js 16:
 
-## 3. Arquitetura de Banco de Dados e Multi-Tenancy (CRÍTICO)
-* O banco de dados funciona no paradigma **RLS (Row Level Security)**. Quase todas as tabelas possuem a coluna `tenant_id` (que referencia a tabela `tenants`).
-* **Sempre** que realizar um `insert` ou `select` global no Supabase via cliente, deve-se explicitar ou garantir que o `tenant_id` esteja sendo manuseado, embora o RLS proteja vazamentos.
-* A estrutura completa e atualizada do banco de dados encontra-se em `docs/schema.sql`. Antes de sugerir criação de tabelas, **consulte o schema.sql**.
+| App | Porta | URL Vercel |
+|---|---|---|
+| `apps/landing` | 3000 | `projeto-kdl-store-landing.vercel.app` |
+| `apps/store` | 3001 | `projeto-kdl-store-store.vercel.app` |
+| `apps/admin` | 3002 | `projeto-kdl-store-admin.vercel.app` |
 
-## 4. Padrão de Auto-Healing (Anti-Cache) Supabase
-Ao interagir com a API REST do Supabase via `@supabase/supabase-js`, o banco frequentemente sofre de "Schema Cache Delay" quando colunas novas são adicionadas (ex: erro `400 Bad Request: column "X" of relation "Y" does not exist`).
-* **Padrão adotado no projeto:** Quase todas as funções de `save()` (ex: clientes, fornecedores, OS, garantias) possuem um loop `while (!success && attempts < 5)` com um regex que extrai o nome da coluna ausente do `res.error.message`, deleta essa propriedade do payload e tenta novamente (`delete payload[match[1]]`).
-* Ao escrever novas rotinas de inserção de dados, **implemente esse fallback de auto-healing** para garantir a estabilidade.
+Documentação completa: `docs/SYSTEM_MAP.md`
+Schema do banco: `docs/schema.sql` + migrations `docs/migration_v1.1.sql`, `v1.2.sql`, `v1.3.sql`
 
-## 5. Regras de Negócio Implementadas Recentemente
-* **Estoque (Movimentação Avançada):** Há uma distinção clara entre "Ajuste/Perda" (para corrigir erros de inventário) e "Entrada de Mercadoria" (compras de fornecedor, que recebem `unit_cost`, `supplier_id` e criam lançamentos automáticos na tabela `accounts_payable`).
-* **Fornecedores (Pedidos):** Pedidos aos fornecedores geram múltiplos registros na tabela `supplier_orders` (um para cada item), com as informações estimadas salvas em JSON na coluna `notes`. Isso permite receber os itens de forma parcial.
-* **Garantias & OS:** O acionamento de uma garantia na tela respectiva cria automaticamente uma Ordem de Serviço na tela de `OS`.
-* **WhatsApp Integration:** O fluxo de comunicação via WhatsApp não engatilha ações automáticas do banco, eles são botões `<a href="https://wa.me/...">` estáticos criados baseados nas rotinas já salvas, evitando perda de estado.
+## 2. Stack (crítico)
 
-## 6. Diretrizes de UI/UX
-* O projeto exige um nível altíssimo de estética "Premium".
-* Botões utilizam as classes `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`, etc.
-* Ícones soltos de ações sempre devem ser envelopados com um atributo `title="Ação..."` para acessibilidade e UX (Tooltips).
-* Tabelas são envolvidas na div `<div className="table-wrapper">`.
+- **Next.js 16 App Router** — não Tailwind, **CSS vanilla** com `globals.css` e tokens `--kdl-*`
+- **TypeScript** — tipagem explícita em todos os estados e tipos de DB
+- **Supabase** via `@supabase/supabase-js` (client-side em páginas interativas)
+- **Sem bibliotecas de componentes** — botões usam classes `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-sm`
+- Ícones de ação sempre com `title="..."` para acessibilidade
+- Tabelas sempre em `<div className="table-wrapper">`
 
-## 7. Como Continuar o Trabalho
-Ao ler este documento, a nova IA deve:
-1. Ler o arquivo `docs/schema.sql` para memorizar a estrutura relacional atual.
-2. Identificar em qual página do diretório `apps/store/app/app/` o usuário quer trabalhar.
-3. Seguir o padrão de estado e design já estabelecido, não reescrevendo em Tailwind ou adicionando dependências pesadas de terceiros sem aviso prévio.
+## 3. Multi-Tenancy e RLS
+
+- Toda tabela de negócio tem `tenant_id uuid` com RLS: `using (tenant_id = auth_tenant_id())`
+- `auth_tenant_id()` é uma SQL function que retorna o `tenant_id` do usuário logado
+- Pages consomem `tenantId` e `userId` via `const { tenantId, userId, storeName } = useTenant()` (TenantContext)
+- O `layout.tsx` em `app/app/` é Server Component — busca `tenantId` uma única vez e injeta via `TenantProvider`
+
+## 4. Padrão Auto-Heal (obrigatório em todos os saves)
+
+Supabase tem "Schema Cache Delay": colunas novas podem retornar erro 400 por alguns minutos.
+**Toda função de save deve usar este padrão:**
+
+```ts
+const removedCols = new Set<string>();
+let success = false, attempts = 0;
+while (!success && attempts < 10) {
+  attempts++;
+  const payload: any = { ...basePayload };
+  removedCols.forEach(c => delete payload[c]);
+  const { error } = await supabase.from('tabela').insert(payload);
+  if (error) {
+    const col = error.message.match(/column "([^"]+)"/)?.[1]
+              ?? error.message.match(/'([^']+)' column/)?.[1];
+    if (col) { removedCols.add(col); continue; }
+    throw error;
+  }
+  success = true;
+}
+```
+
+## 5. Módulos implementados (Fase 8)
+
+| Módulo | Arquivo | Features chave |
+|---|---|---|
+| PDV | `app/pdv/page.tsx` | variações, desconto progressivo, fidelidade, histórico, OS link |
+| Estoque | `app/estoque/page.tsx` | CRUD + grade de variações inline |
+| Clientes | `app/clientes/page.tsx` | CRUD + histórico + loyalty_points |
+| Fornecedores | `app/fornecedores/page.tsx` | CRUD + pedidos multi-item + WhatsApp |
+| OS | `app/os/page.tsx` | pipeline 6 status + pre-fill via query params |
+| Garantias | `app/garantias/page.tsx` | código único + acionar → cria OS |
+| Financeiro | `app/financeiro/page.tsx` | caixa + a pagar + a receber |
+| Relatórios | `app/relatorios/page.tsx` | KPIs + DRE |
+| Agenda | `app/agenda/page.tsx` | pets + agendamentos com pipeline de status |
+| Configurações | `app/configuracoes/page.tsx` | loja + usuários + descontos + assinatura |
+| Catálogo público | `app/catalogo/[slug]/page.tsx` | Server Component + service-role |
+
+## 6. Regras de negócio importantes
+
+### PDV — Variações (grade)
+- `variantsMap: Record<product_id, Variant[]>` carregado no `useEffect`
+- Se produto tem variantes, `handleProductSelect` abre picker modal → `addToCart(product, false, variant)`
+- Chave do carrinho: `product.id::variant.id`
+- Estoque via RPC `decrement_variant_stock(variant_id, qty)`
+
+### PDV — Desconto progressivo
+- `discount_rules` carregado no `useEffect`
+- `useMemo` varre regras ativas, filtra as que satisfazem `min_amount` ou `min_qty`, pega a de maior `discount_pct`
+- `autoDiscount = subtotal * bestRule.discount_pct / 100`
+
+### PDV — Fidelidade
+- 1 ponto por R$1 gasto → RPC `add_loyalty_points(customer_id, Math.floor(total))`
+- Resgate: 100 pts = R$1 → `loyaltyDiscount = loyaltyPoints * 0.01`
+- Caps em `subtotal - globalDisc - autoDiscount`
+- Dedução via RPC `deduct_loyalty_points(customer_id, pts_used)`
+
+### Numeração sequencial de vendas
+- RPC `get_next_sale_number(tenant_id)` faz UPDATE atômico em `tenants.last_sale_number`
+- Exibido como `#0001` (String(n).padStart(4,'0'))
+
+### Catálogo público
+- `lib/supabase/admin.ts` → `createAdminClient()` usa `SUPABASE_SERVICE_ROLE_KEY`
+- Bypassa RLS — usar SOMENTE para leitura pública de produtos
+
+## 7. Banco de dados — tabelas da Fase 8
+
+```
+product_variants  → id, tenant_id, product_id, name, sku, stock_qty, sale_price, cost_price
+pets              → id, tenant_id, customer_id, name, species, breed, birth_date, notes
+appointments      → id, tenant_id, customer_id, pet_id, title, appointment_date, duration_min, price, technician, status, notes
+discount_rules    → id, tenant_id, name, min_qty, min_amount, discount_pct, is_active
+```
+
+RPCs da Fase 8: `decrement_variant_stock`, `deduct_loyalty_points`
+
+Aplicar em ordem: `migration_v1.1.sql` → `v1.2.sql` → `v1.3.sql`
+
+## 8. Variáveis de ambiente críticas
+
+| Var | Onde obrigatória | Para quê |
+|---|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | `apps/store` + `apps/admin` | Catálogo público + API create-user |
+| `STRIPE_SECRET_KEY` | `apps/store` | Checkout + webhook |
+| `STRIPE_WEBHOOK_SECRET` | `apps/store` | Validar eventos Stripe |
+
+## 9. Gaps conhecidos (não implementados)
+
+- Estoque de variantes não é restaurado ao cancelar venda
+- Pontos de fidelidade não são devolvidos ao cancelar venda
+- Limites de plano (produtos/usuários) não são enforçados no runtime
+- Exportação CSV/PDF não implementada
+- Autenticação no portal admin (middleware com cookie secreto)
