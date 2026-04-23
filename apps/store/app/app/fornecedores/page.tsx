@@ -48,19 +48,42 @@ export default function FornecedoresPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setSaving(true);
-    const payload: any = { ...form };
+    let payload: any = { ...form };
     Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
 
-    if (editing) {
-      const { data, error } = await supabase.from('suppliers').update(payload).eq('id', editing.id).select().single();
-      if (error) alert('Erro ao atualizar: ' + error.message + '\n' + (error.details || ''));
-      if (data) setSuppliers(prev => prev.map(s => s.id === data.id ? data : s));
-    } else {
-      const { data, error } = await supabase.from('suppliers').insert({ ...payload, tenant_id: tenantId }).select().single();
-      if (error) alert('Erro ao inserir: ' + error.message + '\n' + (error.details || ''));
-      if (data) setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+    let success = false;
+    let finalData = null;
+    let attempts = 0;
+
+    while (!success && attempts < 10) {
+      attempts++;
+      const res = editing
+        ? await supabase.from('suppliers').update(payload).eq('id', editing.id).select().single()
+        : await supabase.from('suppliers').insert({ ...payload, tenant_id: tenantId }).select().single();
+
+      if (res.error) {
+        // Auto-heal: if column is missing, remove it from payload and retry
+        const match = res.error.message.match(/'([^']+)' column/);
+        if (match && match[1]) {
+          delete payload[match[1]];
+          continue; // Retry without the missing column
+        } else {
+          alert('Erro ao salvar: ' + res.error.message);
+          setSaving(false);
+          return;
+        }
+      }
+      
+      success = true;
+      finalData = res.data;
     }
-    setSaving(false); setShowModal(false);
+
+    if (finalData) {
+      if (editing) setSuppliers(prev => prev.map(s => s.id === finalData.id ? finalData : s));
+      else setSuppliers(prev => [...prev, finalData].sort((a: any, b: any) => a.name.localeCompare(b.name)));
+      setShowModal(false);
+    }
+    setSaving(false);
   }
 
   function openOrder(s: Supplier) {

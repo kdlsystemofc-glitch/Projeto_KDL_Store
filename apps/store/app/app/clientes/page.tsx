@@ -48,19 +48,40 @@ export default function ClientesPage() {
     e.preventDefault();
     if (!form.name.trim()) return;
     setSaving(true);
-    const payload: any = { ...form };
+    let payload: any = { ...form };
     Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
     
-    if (editing) {
-      const { data, error } = await supabase.from('customers').update(payload).eq('id', editing.id).select().single();
-      if (error) alert('Erro ao atualizar: ' + error.message + '\n' + (error.details || ''));
-      if (data) setCustomers(prev => prev.map(c => c.id === data.id ? data : c));
-    } else {
-      const { data, error } = await supabase.from('customers').insert({ ...payload, tenant_id: tenantId }).select().single();
-      if (error) alert('Erro ao inserir: ' + error.message + '\n' + (error.details || ''));
-      if (data) setCustomers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+    let success = false;
+    let finalData = null;
+    let attempts = 0;
+
+    while (!success && attempts < 10) {
+      attempts++;
+      const res = editing
+        ? await supabase.from('customers').update(payload).eq('id', editing.id).select().single()
+        : await supabase.from('customers').insert({ ...payload, tenant_id: tenantId }).select().single();
+
+      if (res.error) {
+        const match = res.error.message.match(/'([^']+)' column/);
+        if (match && match[1]) {
+          delete payload[match[1]];
+          continue;
+        } else {
+          alert('Erro ao salvar: ' + res.error.message);
+          setSaving(false);
+          return;
+        }
+      }
+      success = true;
+      finalData = res.data;
     }
-    setSaving(false); setShowModal(false);
+
+    if (finalData) {
+      if (editing) setCustomers(prev => prev.map(c => c.id === finalData.id ? finalData : c));
+      else setCustomers(prev => [...prev, finalData].sort((a: any, b: any) => a.name.localeCompare(b.name)));
+      setShowModal(false);
+    }
+    setSaving(false);
   }
 
   const filtered = customers.filter(c => {

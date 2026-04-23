@@ -67,20 +67,41 @@ export default function EstoquePage() {
 
   async function saveProduct(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.name.trim()) return;
     setSaving(true);
-    if (editing) {
-      const payload = { ...form, category_id: form.category_id || null };
-      const { data, error } = await supabase.from('products').update(payload).eq('id', editing.id).select().single();
-      if (error) alert('Erro ao atualizar: ' + error.message + '\n' + (error.details || ''));
-      if (data) setProducts(prev => prev.map(p => p.id === data.id ? data : p));
-    } else {
-      const payload = { ...form, category_id: form.category_id || null };
-      const { data, error } = await supabase.from('products').insert({ ...payload, tenant_id: tenantId, is_active: true }).select().single();
-      if (error) alert('Erro ao inserir: ' + error.message + '\n' + (error.details || ''));
-      if (data) setProducts(prev => [...prev, data]);
+    let payload: any = { ...form, category_id: form.category_id || null };
+    
+    let success = false;
+    let finalData = null;
+    let attempts = 0;
+
+    while (!success && attempts < 10) {
+      attempts++;
+      const res = editing
+        ? await supabase.from('products').update(payload).eq('id', editing.id).select().single()
+        : await supabase.from('products').insert({ ...payload, tenant_id: tenantId, is_active: true }).select().single();
+
+      if (res.error) {
+        const match = res.error.message.match(/'([^']+)' column/);
+        if (match && match[1]) {
+          delete payload[match[1]];
+          continue;
+        } else {
+          alert('Erro ao salvar produto: ' + res.error.message);
+          setSaving(false);
+          return;
+        }
+      }
+      success = true;
+      finalData = res.data;
+    }
+
+    if (finalData) {
+      if (editing) setProducts(prev => prev.map(p => p.id === finalData.id ? finalData : p));
+      else setProducts(prev => [...prev, finalData]);
+      setShowModal(false);
     }
     setSaving(false);
-    setShowModal(false);
   }
 
   async function saveCategory(e: React.FormEvent) {
