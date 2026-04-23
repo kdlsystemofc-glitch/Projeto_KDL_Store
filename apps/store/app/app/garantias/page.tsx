@@ -43,10 +43,28 @@ export default function GarantiasPage() {
   async function openClaim(w: Warranty) {
     if (!confirm('Confirmar acionamento desta garantia? Uma OS será criada automaticamente.')) return;
     const { data: { user } } = await supabase.auth.getUser();
-    await Promise.all([
-      supabase.from('service_orders').insert({ tenant_id: tenantId, customer_id: w.customer_id, warranty_id: w.id, status: 'approved', description: `Garantia acionada — ${w.products?.name}`, price: 0, user_id: user!.id }),
-      supabase.from('warranties').update({ status: 'claimed' }).eq('id', w.id),
-    ]);
+    
+    const payload: any = { tenant_id: tenantId, customer_id: w.customer_id, warranty_id: w.id, status: 'approved', description: `Garantia acionada — ${w.products?.name}`, price: 0, user_id: user!.id };
+    
+    let success = false;
+    let attempts = 0;
+    while (!success && attempts < 5) {
+      attempts++;
+      const res = await supabase.from('service_orders').insert(payload);
+      if (res.error) {
+        const match = res.error.message.match(/'([^']+)' column/);
+        if (match && match[1]) {
+          delete payload[match[1]];
+          continue;
+        } else {
+          alert('Erro ao criar OS: ' + res.error.message);
+          return;
+        }
+      }
+      success = true;
+    }
+
+    await supabase.from('warranties').update({ status: 'claimed' }).eq('id', w.id);
     setList(prev => prev.map(x => x.id === w.id ? { ...x, status: 'claimed' } : x));
   }
 

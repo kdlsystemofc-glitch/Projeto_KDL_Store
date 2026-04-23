@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 type Supplier = { id: string; name: string; contact_name: string; phone: string; whatsapp: string; email: string; payment_terms: string; notes: string };
-type Product = { id: string; name: string; stock_qty: number; min_stock: number };
-type OrderItem = { product_id: string; name: string; qty: number };
+type Product = { id: string; name: string; stock_qty: number; min_stock: number; supplier_id: string | null; cost_price: number };
+type OrderItem = { product_id: string; name: string; qty: number; cost: number };
 
 export default function FornecedoresPage() {
   const supabase = createClient();
@@ -17,8 +17,9 @@ export default function FornecedoresPage() {
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [saving, setSaving] = useState(false);
   const [orderSupplier, setOrderSupplier] = useState<Supplier | null>(null);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([{ product_id: '', name: '', qty: 1 }]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([{ product_id: '', name: '', qty: 1, cost: 0 }]);
   const [orderNotes, setOrderNotes] = useState('');
+  const [orderDate, setOrderDate] = useState('');
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [form, setForm] = useState({ name: '', contact_name: '', phone: '', whatsapp: '', email: '', payment_terms: '', notes: '' });
@@ -32,7 +33,7 @@ export default function FornecedoresPage() {
       setTenantId(ud.tenant_id);
       const [s, p, o] = await Promise.all([
         supabase.from('suppliers').select('*').eq('tenant_id', ud.tenant_id).order('name'),
-        supabase.from('products').select('id,name,stock_qty,min_stock').eq('tenant_id', ud.tenant_id).eq('is_active', true).order('name'),
+        supabase.from('products').select('id,name,stock_qty,min_stock,supplier_id,cost_price').eq('tenant_id', ud.tenant_id).eq('is_active', true).order('name'),
         supabase.from('supplier_orders').select('*').eq('tenant_id', ud.tenant_id).order('created_at', { ascending: false }).limit(50),
       ]);
       setSuppliers(s.data || []);
@@ -88,9 +89,11 @@ export default function FornecedoresPage() {
 
   function openOrder(s: Supplier) {
     setOrderSupplier(s);
-    const lowStock = products.filter(p => p.stock_qty <= p.min_stock).map(p => ({ product_id: p.id, name: p.name, qty: Math.max(1, p.min_stock - p.stock_qty + 5) }));
-    setOrderItems(lowStock.length ? lowStock : [{ product_id: '', name: '', qty: 1 }]);
+    const supplierProducts = products.filter(p => p.supplier_id === s.id);
+    const lowStock = supplierProducts.filter(p => p.stock_qty <= p.min_stock).map(p => ({ product_id: p.id, name: p.name, qty: Math.max(1, p.min_stock - p.stock_qty + 5), cost: p.cost_price }));
+    setOrderItems(lowStock.length ? lowStock : [{ product_id: '', name: '', qty: 1, cost: 0 }]);
     setOrderNotes('');
+    setOrderDate('');
   }
 
   async function saveOrder() {
@@ -98,15 +101,35 @@ export default function FornecedoresPage() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     const items = orderItems.filter(i => i.name.trim());
-    for (const item of items) {
-      const { data } = await supabase.from('supplier_orders').insert({
+    
+    // Auto-heal support
+    let attempts = 0; let success = false;
+    while (!success && attempts < 5) {
+      attempts++;
+      const payload = items.map(item => ({
         tenant_id: tenantId, supplier_id: orderSupplier.id,
         product_id: item.product_id || null, product_description: item.name,
-        qty: item.qty, notes: orderNotes, status: 'requested', user_id: user!.id,
-      }).select().single();
-      if (data) setOrders(prev => [data, ...prev]);
+        qty: item.qty, notes: JSON.stringify({ notes: orderNotes, cost: item.cost, date: orderDate }), 
+        status: 'requested', user_id: user!.id,
+      }));
+      
+      const res = await supabase.from('supplier_orders').insert(payload).select();
+      if (res.error) {
+        // Simple retry ignoring missing columns if needed (not easily mapped in bulk, so we just fail gracefully)
+        alert('Erro ao criar pedido: ' + res.error.message);
+        setSaving(false); return;
+      } else if (res.data) {
+        setOrders(prev => [...res.data, ...prev]);
+        success = true;
+      }
     }
     setSaving(false); setOrderSupplier(null);
+  }
+
+  async function markReceived(order: any) {
+    if (!confirm('Marcar este item do pedido como recebido? (Isso não altera o estoque automaticamente, use a tela de Estoque para dar a Entrada oficial e gerar o financeiro)')) return;
+    await supabase.from('supplier_orders').update({ status: 'received' }).eq('id', order.id);
+    setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'received' } : o));
   }
 
   function buildWhatsAppMsg(s: Supplier, o: any) {
@@ -167,20 +190,24 @@ export default function FornecedoresPage() {
               <div className="card">
                 <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '0.95rem', marginBottom: '1rem' }}>Histórico de Pedidos</h3>
                 {!supplierOrders.length ? <p style={{ color: 'var(--kdl-text-muted)', fontSize: '0.875rem' }}>Nenhum pedido registrado.</p>
-                  : supplierOrders.map(o => (
+                  : supplierOrders.map(o => {
+                    let cost = 0, date = '';
+                    try { const n = JSON.parse(o.notes); cost = n.cost; date = n.date; } catch(e) { /* legacy */ }
+                    return (
                     <div key={o.id} style={{ padding: '0.625rem 0', borderBottom: '1px solid var(--kdl-border)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>#{o.id.slice(0,6)} - {o.product_description}</p>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: o.status === 'received' ? '#10B981' : o.status === 'cancelled' ? '#EF4444' : '#F59E0B' }}>{statusMap[o.status] || o.status}</span>
                       </div>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--kdl-text-muted)', marginBottom: '0.5rem' }}>{o.qty} un · Criado em {new Date(o.created_at).toLocaleDateString('pt-BR')}</p>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--kdl-text-muted)', marginBottom: '0.5rem' }}>{o.qty} un {cost > 0 && `· Estimado: R$ ${(cost * o.qty).toFixed(2)} `}{date && `· Prev: ${new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}`} · Criado em {new Date(o.created_at).toLocaleDateString('pt-BR')}</p>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between' }}>
                         {(selectedSupplier?.whatsapp || selectedSupplier?.phone) && (
                           <a href={buildWhatsAppMsg(selectedSupplier!, o)} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" title="Enviar pedido pelo WhatsApp">📲 Enviar Zap</a>
                         )}
+                        {o.status === 'requested' && <button className="btn btn-primary btn-sm" onClick={() => markReceived(o)} title="Receber item">📦 Receber</button>}
                       </div>
                     </div>
-                  ))}
+                  )})}
               </div>
             </>}
         </div>
@@ -213,18 +240,43 @@ export default function FornecedoresPage() {
         <div className="modal-overlay" onClick={() => setOrderSupplier(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '0.5rem' }}>📦 Pedido para {orderSupplier.name}</h2>
-            <p style={{ color: 'var(--kdl-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Items abaixo do estoque mínimo foram pré-selecionados.</p>
+            <p style={{ color: 'var(--kdl-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Os itens abaixo do estoque mínimo (vinculados a este fornecedor) já foram pré-selecionados.</p>
+            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
               {orderItems.map((item, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 8, alignItems: 'center' }}>
-                  <input type="text" className="form-input" placeholder="Produto ou descrição" value={item.name} onChange={e => setOrderItems(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
-                  <input type="number" min={1} className="form-input" style={{ width: 70 }} value={item.qty} onChange={e => setOrderItems(prev => prev.map((x, j) => j === i ? { ...x, qty: Number(e.target.value) } : x))} />
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 8, alignItems: 'center' }}>
+                  <select className="form-select" value={item.product_id} onChange={e => {
+                    const pid = e.target.value;
+                    if (!pid) return setOrderItems(prev => prev.map((x, j) => j === i ? { ...x, product_id: '', name: '', cost: 0 } : x));
+                    const prod = products.find(p => p.id === pid);
+                    setOrderItems(prev => prev.map((x, j) => j === i ? { ...x, product_id: pid, name: prod!.name, cost: prod!.cost_price } : x));
+                  }}>
+                    <option value="">Produto (Livre)</option>
+                    {products.filter(p => p.supplier_id === orderSupplier.id || p.supplier_id === null).map(p => (
+                      <option key={p.id} value={p.id}>{p.name} (Atual: {p.stock_qty})</option>
+                    ))}
+                  </select>
+                  <input type="text" className="form-input" placeholder="Ou digite o nome" value={item.name} onChange={e => setOrderItems(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} style={{ display: item.product_id ? 'none' : 'block' }} />
+                  <input type="number" min={1} className="form-input" style={{ width: 80 }} placeholder="Qtd" value={item.qty} onChange={e => setOrderItems(prev => prev.map((x, j) => j === i ? { ...x, qty: Number(e.target.value) } : x))} />
+                  <input type="number" min={0} step={0.01} className="form-input" style={{ width: 100 }} placeholder="Custo/un" value={item.cost} onChange={e => setOrderItems(prev => prev.map((x, j) => j === i ? { ...x, cost: Number(e.target.value) } : x))} />
                   <button className="btn btn-ghost btn-sm" onClick={() => setOrderItems(prev => prev.filter((_, j) => j !== i))}>✕</button>
                 </div>
               ))}
-              <button className="btn btn-secondary btn-sm" onClick={() => setOrderItems(prev => [...prev, { product_id: '', name: '', qty: 1 }])}>+ Adicionar item</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => setOrderItems(prev => [...prev, { product_id: '', name: '', qty: 1, cost: 0 }])} style={{ alignSelf: 'flex-start' }}>+ Adicionar item</button>
             </div>
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}><label className="form-label" htmlFor="order-notes">Observações</label><textarea id="order-notes" className="form-input" rows={2} value={orderNotes} onChange={e => setOrderNotes(e.target.value)} style={{ resize: 'vertical' }} /></div>
+            
+            <div style={{ background: 'var(--kdl-surface-2)', padding: '1rem', borderRadius: 8, marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>Custo Total Previsto</p>
+                <p style={{ color: 'var(--kdl-text-muted)', fontSize: '0.75rem' }}>Estimativa baseada no custo unitário</p>
+              </div>
+              <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--kdl-primary)' }}>{orderItems.reduce((sum, item) => sum + (item.qty * item.cost), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div className="form-group"><label className="form-label" htmlFor="order-date">Data Prevista de Recebimento</label><input id="order-date" type="date" className="form-input" value={orderDate} onChange={e => setOrderDate(e.target.value)} /></div>
+              <div className="form-group"><label className="form-label" htmlFor="order-notes">Observações</label><textarea id="order-notes" className="form-input" rows={1} value={orderNotes} onChange={e => setOrderNotes(e.target.value)} style={{ resize: 'vertical' }} /></div>
+            </div>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setOrderSupplier(null)}>Cancelar</button>
               <button id="order-save" type="button" className="btn btn-primary" onClick={saveOrder} disabled={saving}>{saving ? 'Salvando...' : '✅ Registrar Pedido'}</button>

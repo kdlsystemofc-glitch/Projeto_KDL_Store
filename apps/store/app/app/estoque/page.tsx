@@ -4,35 +4,47 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 type Product = {
-  id: string; name: string; sku: string; category_id: string;
+  id: string; name: string; sku: string; category_id: string; supplier_id: string | null;
   cost_price: number; sale_price: number; stock_qty: number;
   min_stock: number; unit: string; is_active: boolean;
 };
 type Category = { id: string; name: string };
+type Supplier = { id: string; name: string };
 
 export default function EstoquePage() {
   const supabase = createClient();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [tenantId, setTenantId] = useState('');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
   const [showModal, setShowModal] = useState(false);
+  
+  // Modals de Movimentação
   const [showMovModal, setShowMovModal] = useState<Product | null>(null);
+  const [showEntryModal, setShowEntryModal] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
-  const [movType, setMovType] = useState<'entry' | 'adjustment' | 'loss'>('entry');
+  
+  const [movType, setMovType] = useState<'adjustment' | 'loss'>('adjustment');
   const [movQty, setMovQty] = useState(1);
   const [movReason, setMovReason] = useState('');
   
+  // Estado de Entrada (Entry)
+  const [entrySupplier, setEntrySupplier] = useState('');
+  const [entryReference, setEntryReference] = useState('');
+  const [entryItems, setEntryItems] = useState<{ product_id: string; qty: number; cost: number }[]>([]);
+  const [entryCreatePayable, setEntryCreatePayable] = useState(false);
+
   // States for Categories
   const [showCatModal, setShowCatModal] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [savingCat, setSavingCat] = useState(false);
 
   const [form, setForm] = useState({
-    name: '', sku: '', category_id: '', cost_price: 0, sale_price: 0,
+    name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0,
     stock_qty: 0, min_stock: 0, unit: 'un',
   });
 
@@ -43,12 +55,14 @@ export default function EstoquePage() {
       const { data: ud } = await supabase.from('users').select('tenant_id').eq('id', user.id).single();
       if (!ud) return;
       setTenantId(ud.tenant_id);
-      const [p, c] = await Promise.all([
+      const [p, c, s] = await Promise.all([
         supabase.from('products').select('*').eq('tenant_id', ud.tenant_id).order('name'),
         supabase.from('categories').select('*').eq('tenant_id', ud.tenant_id).order('name'),
+        supabase.from('suppliers').select('id,name').eq('tenant_id', ud.tenant_id).order('name'),
       ]);
       setProducts(p.data || []);
       setCategories(c.data || []);
+      setSuppliers(s.data || []);
       setLoading(false);
     }
     load();
@@ -56,12 +70,12 @@ export default function EstoquePage() {
 
   function openNew() {
     setEditing(null);
-    setForm({ name: '', sku: '', category_id: '', cost_price: 0, sale_price: 0, stock_qty: 0, min_stock: 0, unit: 'un' });
+    setForm({ name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0, stock_qty: 0, min_stock: 0, unit: 'un' });
     setShowModal(true);
   }
   function openEdit(p: Product) {
     setEditing(p);
-    setForm({ name: p.name, sku: p.sku, category_id: p.category_id, cost_price: p.cost_price, sale_price: p.sale_price, stock_qty: p.stock_qty, min_stock: p.min_stock, unit: p.unit });
+    setForm({ name: p.name, sku: p.sku || '', category_id: p.category_id || '', supplier_id: p.supplier_id || '', cost_price: p.cost_price, sale_price: p.sale_price, stock_qty: p.stock_qty, min_stock: p.min_stock, unit: p.unit });
     setShowModal(true);
   }
 
@@ -120,24 +134,90 @@ export default function EstoquePage() {
 
   async function saveMovement() {
     if (!showMovModal) return;
+    if (!movReason.trim()) { alert('Motivo é obrigatório'); return; }
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('stock_movements').insert({
-      tenant_id: tenantId,
-      product_id: showMovModal.id,
-      type: movType,
-      qty: movType === 'loss' ? -Math.abs(movQty) : Math.abs(movQty),
-      reason: movReason,
-      user_id: user!.id,
-    });
+    
+    // Auto-heal support for movement inserts
+    let success = false;
+    let attempts = 0;
+    const payload: any = {
+      tenant_id: tenantId, product_id: showMovModal.id, type: movType,
+      qty: movType === 'loss' ? -Math.abs(movQty) : movQty, // Adjustment uses absolute qty set by user as the final target
+      reason: movReason, user_id: user!.id,
+    };
+    if (movType === 'adjustment') payload.qty = movQty - showMovModal.stock_qty; // For adjustment, qty is the delta
+
+    while (!success && attempts < 5) {
+      attempts++;
+      const res = await supabase.from('stock_movements').insert(payload);
+      if (res.error) {
+        const match = res.error.message.match(/'([^']+)' column/);
+        if (match && match[1]) { delete payload[match[1]]; continue; }
+        alert('Erro: ' + res.error.message); setSaving(false); return;
+      }
+      success = true;
+    }
+
     // Update stock
-    const delta = movType === 'entry' ? movQty : movType === 'adjustment' ? movQty - showMovModal.stock_qty : -movQty;
-    const newQty = movType === 'adjustment' ? movQty : showMovModal.stock_qty + delta;
+    const newQty = movType === 'adjustment' ? movQty : showMovModal.stock_qty - Math.abs(movQty);
     await supabase.from('products').update({ stock_qty: Math.max(0, newQty) }).eq('id', showMovModal.id);
     setProducts(prev => prev.map(p => p.id === showMovModal.id ? { ...p, stock_qty: Math.max(0, newQty) } : p));
-    setSaving(false);
-    setShowMovModal(null);
-    setMovQty(1); setMovReason('');
+    setSaving(false); setShowMovModal(null); setMovQty(1); setMovReason('');
+  }
+
+  async function saveEntry() {
+    if (!entryItems.length) { alert('Adicione pelo menos um produto'); return; }
+    if (entryItems.some(i => !i.product_id || i.qty <= 0)) { alert('Preencha os produtos corretamente'); return; }
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Insert all movements
+    const movements = entryItems.map(item => ({
+      tenant_id: tenantId, product_id: item.product_id, type: 'entry',
+      qty: item.qty, unit_cost: item.cost, supplier_id: entrySupplier || null,
+      reference: entryReference, reason: 'Entrada de mercadoria', user_id: user!.id
+    }));
+    
+    // Auto-heal array
+    let currentMovs = [...movements];
+    let success = false; let attempts = 0;
+    while (!success && attempts < 5) {
+      attempts++;
+      const res = await supabase.from('stock_movements').insert(currentMovs);
+      if (res.error) {
+        const match = res.error.message.match(/'([^']+)' column/);
+        if (match && match[1]) { currentMovs = currentMovs.map(m => { const nm = {...m}; delete (nm as any)[match[1]]; return nm; }); continue; }
+        alert('Erro: ' + res.error.message); setSaving(false); return;
+      }
+      success = true;
+    }
+
+    // Update products stock & optionally update cost
+    await Promise.all(entryItems.map(async (item) => {
+      const prod = products.find(p => p.id === item.product_id);
+      if (!prod) return;
+      const payload: any = { stock_qty: prod.stock_qty + item.qty };
+      if (item.cost !== prod.cost_price && item.cost > 0) payload.cost_price = item.cost;
+      await supabase.from('products').update(payload).eq('id', prod.id);
+    }));
+
+    // Generate accounts payable if requested
+    if (entryCreatePayable) {
+      const totalValue = entryItems.reduce((sum, item) => sum + (item.qty * item.cost), 0);
+      const supplierName = suppliers.find(s => s.id === entrySupplier)?.name || 'Fornecedor';
+      await supabase.from('accounts_payable').insert({
+        tenant_id: tenantId, description: `Compra de Mercadoria - ${supplierName}${entryReference ? ` (Ref: ${entryReference})` : ''}`,
+        category: 'supplier', amount: totalValue, due_date: new Date().toISOString().split('T')[0], status: 'pending'
+      });
+    }
+
+    // Refresh products list to get new stocks
+    const p = await supabase.from('products').select('*').eq('tenant_id', tenantId).order('name');
+    if (p.data) setProducts(p.data);
+    
+    setSaving(false); setShowEntryModal(false);
+    setEntrySupplier(''); setEntryReference(''); setEntryItems([]); setEntryCreatePayable(false);
   }
 
   const filtered = products.filter(p => {
@@ -156,7 +236,12 @@ export default function EstoquePage() {
           <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem' }}>📦 Estoque</h1>
           <p style={{ color: 'var(--kdl-text-muted)', fontSize: '0.875rem' }}>{products.length} produtos cadastrados</p>
         </div>
-        <button id="estoque-novo-btn" className="btn btn-primary" onClick={openNew}>+ Novo Produto</button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-secondary" onClick={() => {
+            setEntrySupplier(''); setEntryReference(''); setEntryItems([{ product_id: '', qty: 1, cost: 0 }]); setEntryCreatePayable(false); setShowEntryModal(true);
+          }}>📥 Registrar Entrada</button>
+          <button id="estoque-novo-btn" className="btn btn-primary" onClick={openNew}>+ Novo Produto</button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -215,8 +300,8 @@ export default function EstoquePage() {
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)} title="Editar">✏️</button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => { setShowMovModal(p); setMovType('entry'); }} title="Movimentação">📦</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)} title="Editar Produto">✏️</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => { setShowMovModal(p); setMovType('adjustment'); setMovQty(p.stock_qty); }} title="Ajuste / Perda">🔄</button>
                     </div>
                   </td>
                 </tr>
@@ -251,6 +336,13 @@ export default function EstoquePage() {
                   <select id="prod-cat" className="form-select" value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}>
                     <option value="">Sem categoria</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="prod-forn">Fornecedor Principal</label>
+                  <select id="prod-forn" className="form-select" value={form.supplier_id} onChange={e => setForm(f => ({ ...f, supplier_id: e.target.value }))}>
+                    <option value="">Sem fornecedor</option>
+                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -294,37 +386,99 @@ export default function EstoquePage() {
         </div>
       )}
 
-      {/* Movement modal */}
+      {/* Adjustment/Loss modal */}
       {showMovModal && (
         <div className="modal-overlay" onClick={() => setShowMovModal(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '0.5rem' }}>Movimentação de Estoque</h2>
-            <p style={{ color: 'var(--kdl-text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>{showMovModal.name} · Atual: {showMovModal.stock_qty} {showMovModal.unit}</p>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '0.5rem' }}>Ajuste ou Perda</h2>
+            <p style={{ color: 'var(--kdl-text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>{showMovModal.name} · Atual: <strong style={{ color: 'var(--kdl-text)' }}>{showMovModal.stock_qty}</strong> {showMovModal.unit}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
-                <label className="form-label">Tipo de movimentação</label>
+                <label className="form-label">O que aconteceu?</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {([['entry', '📥 Entrada'], ['adjustment', '🔄 Ajuste'], ['loss', '📤 Perda']] as const).map(([v, l]) => (
+                  {([['adjustment', '🔄 Ajuste de Inventário'], ['loss', '📤 Produto Danificado/Perda']] as const).map(([v, l]) => (
                     <label key={v} style={{ flex: 1, padding: '0.625rem', border: '1px solid', borderColor: movType === v ? 'var(--kdl-primary)' : 'var(--kdl-border)', borderRadius: 8, cursor: 'pointer', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600, background: movType === v ? 'rgba(108,71,255,0.1)' : 'transparent', color: movType === v ? 'var(--kdl-primary-light)' : 'var(--kdl-text-muted)' }}>
-                      <input type="radio" name="movType" value={v} checked={movType === v} onChange={() => setMovType(v)} style={{ display: 'none' }} />{l}
+                      <input type="radio" name="movType" value={v} checked={movType === v} onChange={() => { setMovType(v as any); setMovQty(v === 'adjustment' ? showMovModal.stock_qty : 1); }} style={{ display: 'none' }} />{l}
                     </label>
                   ))}
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="mov-qty">{movType === 'adjustment' ? 'Quantidade final (total)' : 'Quantidade'}</label>
+                <label className="form-label" htmlFor="mov-qty">{movType === 'adjustment' ? 'Quantidade final encontrada na prateleira' : 'Quantidade perdida'}</label>
                 <input id="mov-qty" type="number" min={0} className="form-input" value={movQty} onChange={e => setMovQty(Number(e.target.value))} />
+                {movType === 'adjustment' && <p style={{ fontSize: '0.75rem', marginTop: 4, color: movQty !== showMovModal.stock_qty ? '#F59E0B' : 'var(--kdl-text-dim)' }}>Diferença: {movQty - showMovModal.stock_qty}</p>}
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="mov-reason">Motivo</label>
-                <input id="mov-reason" type="text" className="form-input" value={movReason} onChange={e => setMovReason(e.target.value)} placeholder="Ex: Compra no fornecedor, Inventário, Produto danificado..." />
+                <label className="form-label" htmlFor="mov-reason">Motivo (Obrigatório) *</label>
+                <input id="mov-reason" type="text" className="form-input" value={movReason} onChange={e => setMovReason(e.target.value)} placeholder={movType === 'adjustment' ? "Ex: Contagem mensal, erro inicial..." : "Ex: Caiu e quebrou, extraviado..."} required />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowMovModal(null)}>Cancelar</button>
-                <button id="mov-save" type="button" className="btn btn-primary" onClick={saveMovement} disabled={saving}>
+                <button id="mov-save" type="button" className="btn btn-primary" onClick={saveMovement} disabled={saving || !movReason.trim()}>
                   {saving ? 'Salvando...' : 'Registrar'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Entry modal (Entrada Avançada) */}
+      {showEntryModal && (
+        <div className="modal-overlay" onClick={() => setShowEntryModal(false)}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '1.5rem' }}>📥 Entrada de Mercadoria</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div className="form-group">
+                <label className="form-label">Fornecedor</label>
+                <select className="form-select" value={entrySupplier} onChange={e => setEntrySupplier(e.target.value)}>
+                  <option value="">Desconhecido / Não especificado</option>
+                  {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Nota Fiscal / Referência</label>
+                <input type="text" className="form-input" value={entryReference} onChange={e => setEntryReference(e.target.value)} placeholder="Nº da NFe ou recibo" />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Produtos Recebidos</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {entryItems.map((item, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <select className="form-select" style={{ flex: 2 }} value={item.product_id} onChange={e => {
+                      const pid = e.target.value;
+                      const prod = products.find(p => p.id === pid);
+                      setEntryItems(prev => prev.map((x, j) => j === i ? { ...x, product_id: pid, cost: prod?.cost_price || 0 } : x));
+                    }}>
+                      <option value="">Selecione um produto...</option>
+                      {products.map(p => <option key={p.id} value={p.id}>{p.name} (Atual: {p.stock_qty})</option>)}
+                    </select>
+                    <input type="number" min={1} className="form-input" placeholder="Qtd" value={item.qty || ''} onChange={e => setEntryItems(prev => prev.map((x, j) => j === i ? { ...x, qty: Number(e.target.value) } : x))} style={{ width: 80 }} />
+                    <input type="number" min={0} step={0.01} className="form-input" placeholder="Custo unit." value={item.cost || ''} onChange={e => setEntryItems(prev => prev.map((x, j) => j === i ? { ...x, cost: Number(e.target.value) } : x))} style={{ width: 110 }} title="Custo por unidade" />
+                    <button className="btn btn-ghost btn-sm" onClick={() => setEntryItems(prev => prev.filter((_, j) => j !== i))} style={{ color: 'var(--kdl-text-muted)' }}>✕</button>
+                  </div>
+                ))}
+                <button className="btn btn-secondary btn-sm" onClick={() => setEntryItems(prev => [...prev, { product_id: '', qty: 1, cost: 0 }])} style={{ alignSelf: 'flex-start', marginTop: 4 }}>+ Adicionar Produto</button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--kdl-surface-2)', borderRadius: 8, marginBottom: '1.5rem' }}>
+              <div>
+                <p style={{ fontWeight: 600, marginBottom: 4 }}>Valor Total: {entryItems.reduce((s, i) => s + (i.qty * i.cost), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={entryCreatePayable} onChange={e => setEntryCreatePayable(e.target.checked)} />
+                  Gerar lançamento no "Contas a Pagar" automaticamente
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowEntryModal(false)}>Cancelar</button>
+              <button type="button" className="btn btn-primary" onClick={saveEntry} disabled={saving || !entryItems.length}>
+                {saving ? 'Registrando...' : 'Confirmar Entrada'}
+              </button>
             </div>
           </div>
         </div>
