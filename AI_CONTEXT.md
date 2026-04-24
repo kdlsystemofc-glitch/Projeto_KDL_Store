@@ -103,9 +103,11 @@ while (!success && attempts < 10) {
 ```
 product_variants  → id, tenant_id, product_id, name, sku, stock_qty, sale_price, cost_price
 pets              → id, tenant_id, customer_id, name, species, breed, birth_date, notes
-appointments      → id, tenant_id, customer_id, pet_id, title, appointment_date, duration_min, price, technician, status, notes
+appointments      → id, tenant_id, customer_id, pet_id, title, scheduled_at, duration_min, price, technician_id (→ users), status, notes
 discount_rules    → id, tenant_id, name, min_qty, min_amount, discount_pct, is_active
 ```
+
+> **Schema gap corrigido em v1.4:** `customers` estava sem `phone2 text` e `birthday date`, usados em `clientes/page.tsx`. Migration v1.4 adiciona essas colunas.
 
 RPCs da Fase 8: `decrement_variant_stock`, `deduct_loyalty_points`
 

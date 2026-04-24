@@ -161,8 +161,10 @@ create table customers (
   name            text not null,
   cpf_cnpj        text,
   phone           text,
+  phone2          text,
   email           text,
-  address         jsonb,
+  birthday        date,
+  address         text,
   loyalty_points  integer default 0,
   created_at      timestamptz default now()
 );

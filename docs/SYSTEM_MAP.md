@@ -357,6 +357,8 @@ SUPABASE_SERVICE_ROLE_KEY
 |---|---|---|---|
 | `tenants` | `last_sale_number` | `integer default 0` | Contador atômico para numeração sequencial |
 | `tenants` | `whatsapp` | `text` | WhatsApp da loja para notificações |
+| `customers` | `phone2` | `text` | Segundo telefone do cliente |
+| `customers` | `birthday` | `date` | Data de aniversário |
 | `users` | `email` | `text` | Email copiado do auth.users |
 | `products` | `warranty_months` | `integer default 0` | Meses de garantia padrão |
 | `sales` | `sale_number` | `integer` | Número sequencial por tenant |
@@ -388,8 +390,8 @@ created_at timestamptz
 #### `appointments`
 ```sql
 id uuid PK, tenant_id uuid, customer_id uuid, pet_id uuid → pets,
-title text, appointment_date timestamptz, duration_min integer,
-price numeric default 0, technician text,
+title text, scheduled_at timestamptz, duration_min integer,
+price numeric default 0, technician_id uuid → users,
 status text default 'scheduled', notes text,
 created_at timestamptz
 ```
