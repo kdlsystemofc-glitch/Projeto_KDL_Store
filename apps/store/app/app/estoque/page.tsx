@@ -7,7 +7,7 @@ import { useTenant } from '../context';
 type Product = {
   id: string; name: string; sku: string; category_id: string; supplier_id: string | null;
   cost_price: number; sale_price: number; stock_qty: number;
-  min_stock: number; unit: string; is_active: boolean; warranty_months: number;
+  min_stock: number; unit: string; is_active: boolean; warranty_months: number; warranty_unit: string;
 };
 type ProductVariant = { id: string; product_id: string; name: string; sku: string; stock_qty: number; sale_price: number | null; cost_price: number | null; is_active: boolean };
 type Category = { id: string; name: string };
@@ -52,7 +52,7 @@ export default function EstoquePage() {
 
   const [form, setForm] = useState({
     name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0,
-    stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0,
+    stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0, warranty_unit: 'months',
   });
 
   useEffect(() => {
@@ -75,12 +75,12 @@ export default function EstoquePage() {
     setEditing(null);
     setVariants([]);
     setVariantForm({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
-    setForm({ name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0, stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0 });
+    setForm({ name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0, stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0, warranty_unit: 'months' });
     setShowModal(true);
   }
   async function openEdit(p: Product) {
     setEditing(p);
-    setForm({ name: p.name, sku: p.sku || '', category_id: p.category_id || '', supplier_id: p.supplier_id || '', cost_price: p.cost_price, sale_price: p.sale_price, stock_qty: p.stock_qty, min_stock: p.min_stock, unit: p.unit, warranty_months: p.warranty_months || 0 });
+    setForm({ name: p.name, sku: p.sku || '', category_id: p.category_id || '', supplier_id: p.supplier_id || '', cost_price: p.cost_price, sale_price: p.sale_price, stock_qty: p.stock_qty, min_stock: p.min_stock, unit: p.unit, warranty_months: p.warranty_months || 0, warranty_unit: p.warranty_unit || 'months' });
     setVariantForm({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
     const { data: vdata } = await supabase.from('product_variants').select('*').eq('product_id', p.id).order('name');
     setVariants(vdata || []);
@@ -91,7 +91,7 @@ export default function EstoquePage() {
     e.preventDefault();
     if (!form.name.trim()) return;
     setSaving(true);
-    let payload: any = { ...form, category_id: form.category_id || null };
+    let payload: any = { ...form, category_id: form.category_id || null, supplier_id: form.supplier_id || null };
     
     let success = false;
     let finalData = null;
@@ -414,9 +414,20 @@ export default function EstoquePage() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="prod-warranty">🛡️ Garantia padrão (meses)</label>
-                  <input id="prod-warranty" type="number" min={0} max={120} className="form-input" value={form.warranty_months} onChange={e => setForm(f => ({ ...f, warranty_months: Number(e.target.value) }))} placeholder="0 = sem garantia" />
-                  {form.warranty_months > 0 && <p style={{ fontSize: '0.75rem', color: '#00D4AA', marginTop: 4 }}>✅ Garantia de {form.warranty_months} meses será sugerida no PDV</p>}
+                  <label className="form-label" htmlFor="prod-warranty">🛡️ Garantia padrão</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input id="prod-warranty" type="number" min={0} max={9999} className="form-input" style={{ flex: 1 }} value={form.warranty_months} onChange={e => setForm(f => ({ ...f, warranty_months: Number(e.target.value) }))} placeholder="0 = sem garantia" />
+                    <select className="form-select" style={{ width: 100 }} value={form.warranty_unit} onChange={e => setForm(f => ({ ...f, warranty_unit: e.target.value }))}>
+                      <option value="days">Dias</option>
+                      <option value="months">Meses</option>
+                      <option value="years">Anos</option>
+                    </select>
+                  </div>
+                  {form.warranty_months > 0 && (
+                    <p style={{ fontSize: '0.75rem', color: '#00D4AA', marginTop: 4 }}>
+                      ✅ Garantia de {form.warranty_months} {form.warranty_unit === 'days' ? 'dia(s)' : form.warranty_unit === 'years' ? 'ano(s)' : 'mese(s)'} será sugerida no PDV
+                    </p>
+                  )}
                 </div>
               </div>
               {form.sale_price > 0 && form.cost_price > 0 && (

@@ -23,7 +23,8 @@ export default function ConfiguracoesPage() {
   const [users, setUsers]       = useState<UserRow[]>([]);
   const [planInfo, setPlanInfo] = useState<{ name: string; price: number; status: string } | null>(null);
   const [saving, setSaving]     = useState(false);
-  const [storeForm, setStoreForm] = useState({ name: '', slug: '' });
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [storeForm, setStoreForm] = useState({ name: '', slug: '', whatsapp: '' });
   const [showUserModal, setShowUserModal] = useState(false);
   const [userForm, setUserForm] = useState({ name: '', email: '', role: 'seller', password: '' });
   const [savedMsg, setSavedMsg] = useState('');
@@ -41,7 +42,7 @@ export default function ConfiguracoesPage() {
     async function load() {
       const [tenantRes, usersRes, rulesRes] = await Promise.all([
         supabase.from('tenants')
-          .select('name, slug, status, plans(name, price_monthly)')
+          .select('name, slug, whatsapp, status, plans(name, price_monthly)')
           .eq('id', tenantId)
           .single(),
         supabase.from('users')
@@ -58,7 +59,7 @@ export default function ConfiguracoesPage() {
         const t = tenantRes.data as any;
         const p = t.plans;
         setTenant({ name: t.name, slug: t.slug });
-        setStoreForm({ name: t.name || '', slug: t.slug || '' });
+        setStoreForm({ name: t.name || '', slug: t.slug || '', whatsapp: t.whatsapp || '' });
         setPlanInfo(p ? { name: p.name, price: p.price_monthly, status: t.status } : null);
       }
 
@@ -79,7 +80,7 @@ export default function ConfiguracoesPage() {
   async function saveTenant(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await supabase.from('tenants').update({ name: storeForm.name }).eq('id', tenantId);
+    await supabase.from('tenants').update({ name: storeForm.name, whatsapp: storeForm.whatsapp || null }).eq('id', tenantId);
     setTenant(t => t ? { ...t, name: storeForm.name } : t);
     setSaving(false);
     setSavedMsg('Salvo com sucesso!');
@@ -222,6 +223,18 @@ export default function ConfiguracoesPage() {
               <label className="form-label" htmlFor="loja-slug">Identificador único (slug)</label>
               <input id="loja-slug" type="text" className="form-input" value={storeForm.slug} disabled style={{ opacity: 0.5 }} />
               <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-dim)', marginTop: 4 }}>O slug não pode ser alterado após o cadastro.</p>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="loja-whatsapp">WhatsApp da loja</label>
+              <input
+                id="loja-whatsapp"
+                type="tel"
+                className="form-input"
+                value={storeForm.whatsapp}
+                onChange={e => setStoreForm(f => ({ ...f, whatsapp: e.target.value }))}
+                placeholder="Ex: 5511999999999 (com DDI e DDD)"
+              />
+              <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-dim)', marginTop: 4 }}>Usado para gerar links de contato no sistema.</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <button id="loja-save" type="submit" className="btn btn-primary" disabled={saving}>
@@ -427,22 +440,38 @@ export default function ConfiguracoesPage() {
                   </span>
                 </div>
               </div>
-              <a
-                href="https://billing.stripe.com"
-                target="_blank"
-                rel="noopener noreferrer"
+
+              <button
                 id="subscription-portal-btn"
                 className="btn btn-secondary"
                 style={{ justifyContent: 'center' }}
-              >🔗 Gerenciar assinatura no Stripe</a>
+                disabled={portalLoading}
+                onClick={async () => {
+                  setPortalLoading(true);
+                  try {
+                    const res = await fetch('/api/stripe/portal', { method: 'POST' });
+                    const json = await res.json();
+                    if (json.url) window.location.href = json.url;
+                    else alert(json.error || 'Erro ao abrir portal');
+                  } catch { alert('Erro de comunicação'); }
+                  setPortalLoading(false);
+                }}
+              >
+                {portalLoading ? 'Abrindo...' : '🔗 Gerenciar assinatura no Stripe'}
+              </button>
+
               <a
-                href="https://kdlstore.com.br#planos"
+                href={`${process.env.NEXT_PUBLIC_LANDING_URL || 'https://kdlstore.com.br'}#planos`}
                 target="_blank"
                 rel="noopener noreferrer"
                 id="upgrade-btn"
                 className="btn btn-primary"
                 style={{ justifyContent: 'center' }}
               >⬆️ Fazer upgrade de plano</a>
+
+              <p style={{ fontSize: '0.8rem', color: 'var(--kdl-text-muted)', lineHeight: 1.5, borderTop: '1px solid var(--kdl-border)', paddingTop: '0.75rem' }}>
+                Pelo portal do Stripe você pode <strong>alterar o método de pagamento</strong>, visualizar faturas, <strong>cancelar</strong> ou <strong>reativar</strong> sua assinatura. Após o cancelamento, o acesso é mantido até o fim do período pago. Para reativar, basta acessar o portal antes do encerramento.
+              </p>
             </div>
           ) : (
             <p style={{ color: 'var(--kdl-text-muted)' }}>Carregando dados da assinatura...</p>

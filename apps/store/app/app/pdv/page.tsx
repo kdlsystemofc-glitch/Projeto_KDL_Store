@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useTenant } from '../context';
 
-type Product  = { id: string; name: string; sku: string; sale_price: number; cost_price: number; stock_qty: number; warranty_months?: number };
+type Product  = { id: string; name: string; sku: string; sale_price: number; cost_price: number; stock_qty: number; warranty_months?: number; warranty_unit?: string };
 type Variant  = { id: string; product_id: string; name: string; sku: string | null; stock_qty: number; sale_price: number | null; cost_price: number | null };
 type Customer = { id: string; name: string; phone: string; cpf_cnpj: string; loyalty_points?: number };
 type CartItem = { product: Product; qty: number; unit_price: number; discount: number; is_gift: boolean; variantId?: string | null; variantName?: string | null };
@@ -69,7 +69,7 @@ export default function PDVPage() {
     async function load() {
       const today = new Date().toISOString().split('T')[0];
       const [p, c, s, v, dr] = await Promise.all([
-        supabase.from('products').select('id,name,sku,sale_price,cost_price,stock_qty,warranty_months').eq('tenant_id', tenantId).eq('is_active', true),
+        supabase.from('products').select('id,name,sku,sale_price,cost_price,stock_qty,warranty_months,warranty_unit').eq('tenant_id', tenantId).eq('is_active', true),
         supabase.from('customers').select('id,name,phone,cpf_cnpj,loyalty_points').eq('tenant_id', tenantId),
         supabase.from('sales')
           .select('id,sale_number,total,payment_method,created_at,status,customers(name)')
@@ -299,6 +299,7 @@ export default function PDVPage() {
         const wPayload: any = {
           tenant_id: tenantId, sale_id: saleData.id, customer_id: customer.id,
           product_id: item.product.id, warranty_months: item.product.warranty_months!,
+          warranty_unit: item.product.warranty_unit || 'months',
           issue_date: new Date().toISOString().split('T')[0], status: 'active', warranty_code: code,
         };
         let wOk = false; let wA = 0;
@@ -381,7 +382,7 @@ export default function PDVPage() {
     ).join('\n');
     const wLines = doneSaleItems
       .filter(i => !i.is_gift && (i.product.warranty_months ?? 0) > 0)
-      .map(i => `  ${i.product.name.slice(0, 28)} — ${i.product.warranty_months}m`)
+      .map(i => { const u = i.product.warranty_unit || 'months'; const s = u === 'days' ? 'd' : u === 'years' ? 'a' : 'm'; return `  ${i.product.name.slice(0, 28)} — ${i.product.warranty_months}${s}`; })
       .join('\n');
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comprovante ${saleLabel(doneSale)}</title>
     <style>body{font-family:'Courier New',monospace;width:80mm;padding:12px;font-size:12px;color:#000}
@@ -553,7 +554,7 @@ export default function PDVPage() {
                         <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-muted)' }}>
                           {p.sku && `SKU: ${p.sku} · `}
                           {pvars.length > 0 ? `🎨 ${pvars.length} variações` : `Estoque: ${p.stock_qty}`}
-                          {(p.warranty_months ?? 0) > 0 && ` · 🛡️ ${p.warranty_months}m`}
+                          {(p.warranty_months ?? 0) > 0 && ` · 🛡️ ${p.warranty_months}${p.warranty_unit === 'days' ? 'd' : p.warranty_unit === 'years' ? 'a' : 'm'}`}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>

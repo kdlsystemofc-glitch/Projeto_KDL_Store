@@ -183,7 +183,7 @@ apps/store/
 - Tabela filtrável por nome/SKU/categoria
 - Cálculo de margem em tempo real (badge colorido)
 - Badge de estoque baixo (qty ≤ min_stock)
-- Modal de cadastro/edição: nome, SKU, categoria, custo, preço, estoque, min_stock, unidade, warranty_months
+- Modal de cadastro/edição: nome, SKU, categoria, **fornecedor principal** (supplier_id), custo, preço, estoque, min_stock, unidade, warranty_months + warranty_unit (Dias/Meses/Anos)
 - Preview de margem no formulário
 - **Grade de variações:** seção "🎨 Grade de Variações" no modal de edição (somente produtos já salvos)
   - Lista variantes existentes: nome, SKU, badge estoque, preço, botão remover
@@ -239,13 +239,13 @@ apps/store/
   - Campos: nome, cliente, espécie, raça, data nascimento, obs
 
 #### ⚙️ Configurações (`/app/configuracoes`)
-- **Aba Loja:** nome da loja, WhatsApp (para notificações)
+- **Aba Loja:** nome da loja, WhatsApp da loja (geração de links de contato)
 - **Aba Usuários:** lista + convite via `/api/admin/create-user`; ativa/desativa; define role
 - **Aba Descontos** ← **Fase 8:** CRUD de regras de desconto progressivo
   - Campos: nome, valor mínimo (R$) ou qtd mínima de itens, percentual de desconto
   - Toggle ativo/inativo
   - Preview ao vivo: "Pedidos acima de R$ X ganham Y% de desconto"
-- **Aba Assinatura:** plano + status + link Stripe Portal + upgrade
+- **Aba Assinatura:** plano + status + botão portal Stripe (via `/api/stripe/portal`, abre sessão autenticada) + botão upgrade + texto informativo sobre cancelamento/reativação via portal
 
 ### TenantContext (`app/app/context.tsx`)
 
@@ -607,6 +607,8 @@ NEXT_PUBLIC_ADMIN_URL=https://admin.kdlstore.com.br
 | `docs/migration_v1.1.sql` | Fase 5 | `warranty_months`, `last_sale_number`, trigger `set_warranty_expiry`, RPC `get_next_sale_number` |
 | `docs/migration_v1.2.sql` | Fase 6/7 | `warranty_code`, `sale_number`, `whatsapp` (tenants), `sale_id` (OS), `email` (users), RPCs `add_loyalty_points` |
 | `docs/migration_v1.3.sql` | Fase 8 | `product_variants`, `pets`, `appointments`, `discount_rules`, `variant_id` em `sale_items`, RPCs `decrement_variant_stock` + `deduct_loyalty_points` |
+| `docs/migration_v1.4.sql` | Fix | `customers.phone2`, `customers.birthday` |
+| `docs/migration_v1.5.sql` | Fix | `products.warranty_unit`, `warranties.warranty_unit`, trigger `set_warranty_expiry` atualizado |
 
 **Para aplicar:** Supabase → SQL Editor → cole e execute cada migration em ordem.
 
