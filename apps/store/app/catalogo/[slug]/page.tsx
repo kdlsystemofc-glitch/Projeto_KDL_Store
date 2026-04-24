@@ -34,6 +34,7 @@ export default async function CatalogoPage({ params }: Props) {
     .select('id,name,sku,sale_price,stock_qty,unit,warranty_months,image_url,categories(name)')
     .eq('tenant_id', tenant.id)
     .eq('is_active', true)
+    .neq('product_type', 'service')
     .gt('stock_qty', 0)
     .order('name');
 

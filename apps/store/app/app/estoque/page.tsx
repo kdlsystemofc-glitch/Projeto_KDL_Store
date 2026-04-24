@@ -8,6 +8,7 @@ type Product = {
   id: string; name: string; sku: string; category_id: string; supplier_id: string | null;
   cost_price: number; sale_price: number; stock_qty: number;
   min_stock: number; unit: string; is_active: boolean; warranty_months: number; warranty_unit: string;
+  product_type: string;
 };
 type ProductVariant = { id: string; product_id: string; name: string; sku: string; stock_qty: number; sale_price: number | null; cost_price: number | null; is_active: boolean };
 type Category = { id: string; name: string };
@@ -30,7 +31,7 @@ export default function EstoquePage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   
-  const [movType, setMovType] = useState<'adjustment' | 'loss'>('adjustment');
+  const [movType, setMovType] = useState<'entry' | 'adjustment' | 'loss'>('adjustment');
   const [movQty, setMovQty] = useState(1);
   const [movReason, setMovReason] = useState('');
   
@@ -52,7 +53,7 @@ export default function EstoquePage() {
 
   const [form, setForm] = useState({
     name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0,
-    stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0, warranty_unit: 'months',
+    stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0, warranty_unit: 'months', product_type: 'product',
   });
 
   useEffect(() => {
@@ -75,12 +76,12 @@ export default function EstoquePage() {
     setEditing(null);
     setVariants([]);
     setVariantForm({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
-    setForm({ name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0, stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0, warranty_unit: 'months' });
+    setForm({ name: '', sku: '', category_id: '', supplier_id: '', cost_price: 0, sale_price: 0, stock_qty: 0, min_stock: 0, unit: 'un', warranty_months: 0, warranty_unit: 'months', product_type: 'product' });
     setShowModal(true);
   }
   async function openEdit(p: Product) {
     setEditing(p);
-    setForm({ name: p.name, sku: p.sku || '', category_id: p.category_id || '', supplier_id: p.supplier_id || '', cost_price: p.cost_price, sale_price: p.sale_price, stock_qty: p.stock_qty, min_stock: p.min_stock, unit: p.unit, warranty_months: p.warranty_months || 0, warranty_unit: p.warranty_unit || 'months' });
+    setForm({ name: p.name, sku: p.sku || '', category_id: p.category_id || '', supplier_id: p.supplier_id || '', cost_price: p.cost_price, sale_price: p.sale_price, stock_qty: p.stock_qty, min_stock: p.min_stock, unit: p.unit, warranty_months: p.warranty_months || 0, warranty_unit: p.warranty_unit || 'months', product_type: p.product_type || 'product' });
     setVariantForm({ name: '', sku: '', stock_qty: 0, sale_price: '', cost_price: '' });
     const { data: vdata } = await supabase.from('product_variants').select('*').eq('product_id', p.id).order('name');
     setVariants(vdata || []);
@@ -126,8 +127,7 @@ export default function EstoquePage() {
     setSaving(false);
   }
 
-  async function addVariant(e: React.FormEvent) {
-    e.preventDefault();
+  async function addVariant() {
     if (!editing || !variantForm.name.trim()) return;
     setSavingVariant(true);
     const payload: any = {
@@ -187,7 +187,7 @@ export default function EstoquePage() {
     let attempts = 0;
     const payload: any = {
       tenant_id: tenantId, product_id: showMovModal.id, type: movType,
-      qty: movType === 'loss' ? -Math.abs(movQty) : movQty,
+      qty: movType === 'loss' ? -Math.abs(movQty) : Math.abs(movQty),
       reason: movReason, user_id: userId || null,
     };
     if (movType === 'adjustment') payload.qty = movQty - showMovModal.stock_qty;
@@ -204,7 +204,11 @@ export default function EstoquePage() {
     }
 
     // Update stock
-    const newQty = movType === 'adjustment' ? movQty : showMovModal.stock_qty - Math.abs(movQty);
+    const newQty = movType === 'entry'
+      ? showMovModal.stock_qty + Math.abs(movQty)
+      : movType === 'adjustment'
+        ? movQty
+        : showMovModal.stock_qty - Math.abs(movQty);
     await supabase.from('products').update({ stock_qty: Math.max(0, newQty) }).eq('id', showMovModal.id);
     setProducts(prev => prev.map(p => p.id === showMovModal.id ? { ...p, stock_qty: Math.max(0, newQty) } : p));
     setSaving(false); setShowMovModal(null); setMovQty(1); setMovReason('');
@@ -320,30 +324,32 @@ export default function EstoquePage() {
             ) : !filtered.length ? (
               <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--kdl-text-muted)' }}>Nenhum produto encontrado</td></tr>
             ) : filtered.map(p => {
-              const lowStock = p.stock_qty <= p.min_stock;
+              const isService = p.product_type === 'service';
+              const lowStock = !isService && p.stock_qty <= p.min_stock;
               const catName = categories.find(c => c.id === p.category_id)?.name || '—';
               return (
                 <tr key={p.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{p.name}</div>
+                    {isService && <span className="badge badge-info" style={{ marginTop: 2, fontSize: '0.65rem' }}>Serviço</span>}
                     {!p.is_active && <span className="badge badge-gray" style={{ marginTop: 2 }}>Inativo</span>}
                   </td>
                   <td style={{ color: 'var(--kdl-text-muted)', fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.sku || '—'}</td>
                   <td style={{ color: 'var(--kdl-text-muted)' }}>{catName}</td>
-                  <td style={{ textAlign: 'right', color: 'var(--kdl-text-muted)' }}>{p.cost_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td style={{ textAlign: 'right', color: 'var(--kdl-text-muted)' }}>{isService ? '—' : p.cost_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                   <td style={{ textAlign: 'right', fontWeight: 600, color: '#00D4AA' }}>{p.sale_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <span className={`badge ${Number(margin(p)) > 30 ? 'badge-success' : Number(margin(p)) > 10 ? 'badge-warning' : 'badge-danger'}`}>{margin(p)}%</span>
+                    {isService ? <span className="badge badge-gray">—</span> : <span className={`badge ${Number(margin(p)) > 30 ? 'badge-success' : Number(margin(p)) > 10 ? 'badge-warning' : 'badge-danger'}`}>{margin(p)}%</span>}
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    <span className={`badge ${lowStock ? 'badge-danger' : 'badge-success'}`}>
-                      {p.stock_qty} {p.unit}
-                    </span>
+                    {isService
+                      ? <span className="badge badge-info">Serviço</span>
+                      : <span className={`badge ${lowStock ? 'badge-danger' : 'badge-success'}`}>{p.stock_qty} {p.unit}</span>}
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)} title="Editar Produto">✏️</button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => { setShowMovModal(p); setMovType('adjustment'); setMovQty(p.stock_qty); }} title="Ajuste / Perda">🔄</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)} title="Editar">✏️</button>
+                      {!isService && <button className="btn btn-ghost btn-sm" onClick={() => { setShowMovModal(p); setMovType('entry'); setMovQty(1); }} title="Movimentação de estoque">🔄</button>}
                     </div>
                   </td>
                 </tr>
@@ -361,10 +367,18 @@ export default function EstoquePage() {
               {editing ? 'Editar Produto' : 'Novo Produto'}
             </h2>
             <form onSubmit={saveProduct} id="produto-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Tipo de item */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {([['product', '📦 Produto'], ['service', '🔧 Serviço']] as const).map(([v, l]) => (
+                  <label key={v} style={{ flex: 1, padding: '0.625rem', border: '1px solid', borderColor: form.product_type === v ? 'var(--kdl-primary)' : 'var(--kdl-border)', borderRadius: 8, cursor: 'pointer', textAlign: 'center', fontSize: '0.85rem', fontWeight: 600, background: form.product_type === v ? 'rgba(108,71,255,0.1)' : 'transparent', color: form.product_type === v ? 'var(--kdl-primary-light)' : 'var(--kdl-text-muted)' }}>
+                    <input type="radio" name="product_type" value={v} checked={form.product_type === v} onChange={() => setForm(f => ({ ...f, product_type: v, ...(v === 'service' ? { stock_qty: 0, min_stock: 0, cost_price: 0 } : {}) }))} style={{ display: 'none' }} />{l}
+                  </label>
+                ))}
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label" htmlFor="prod-name">Nome do Produto *</label>
-                  <input id="prod-name" type="text" className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="Ex: Rádio Pioneer MVH-S218BT" />
+                  <label className="form-label" htmlFor="prod-name">{form.product_type === 'service' ? 'Nome do Serviço' : 'Nome do Produto'} *</label>
+                  <input id="prod-name" type="text" className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder={form.product_type === 'service' ? 'Ex: Instalação de Som' : 'Ex: Rádio Pioneer MVH-S218BT'} />
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="prod-sku">SKU / Código</label>
@@ -387,22 +401,28 @@ export default function EstoquePage() {
                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="prod-cost">Preço de Custo (R$)</label>
-                  <input id="prod-cost" type="number" min={0} step={0.01} className="form-input" value={form.cost_price} onChange={e => setForm(f => ({ ...f, cost_price: Number(e.target.value) }))} />
-                </div>
-                <div className="form-group">
+                {form.product_type !== 'service' && (
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="prod-cost">Preço de Custo (R$)</label>
+                    <input id="prod-cost" type="number" min={0} step={0.01} className="form-input" value={form.cost_price} onChange={e => setForm(f => ({ ...f, cost_price: Number(e.target.value) }))} />
+                  </div>
+                )}
+                <div className={`form-group${form.product_type === 'service' ? ' ' : ''}`} style={form.product_type === 'service' ? { gridColumn: '1 / -1' } : {}}>
                   <label className="form-label" htmlFor="prod-price">Preço de Venda (R$) *</label>
                   <input id="prod-price" type="number" min={0} step={0.01} className="form-input" value={form.sale_price} onChange={e => setForm(f => ({ ...f, sale_price: Number(e.target.value) }))} required />
                 </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="prod-stock">Estoque Inicial</label>
-                  <input id="prod-stock" type="number" min={0} className="form-input" value={form.stock_qty} onChange={e => setForm(f => ({ ...f, stock_qty: Number(e.target.value) }))} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="prod-min">Estoque Mínimo (alerta)</label>
-                  <input id="prod-min" type="number" min={0} className="form-input" value={form.min_stock} onChange={e => setForm(f => ({ ...f, min_stock: Number(e.target.value) }))} />
-                </div>
+                {form.product_type !== 'service' && (
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="prod-stock">Estoque Inicial</label>
+                    <input id="prod-stock" type="number" min={0} className="form-input" value={form.stock_qty} onChange={e => setForm(f => ({ ...f, stock_qty: Number(e.target.value) }))} />
+                  </div>
+                )}
+                {form.product_type !== 'service' && (
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="prod-min">Estoque Mínimo (alerta)</label>
+                    <input id="prod-min" type="number" min={0} className="form-input" value={form.min_stock} onChange={e => setForm(f => ({ ...f, min_stock: Number(e.target.value) }))} />
+                  </div>
+                )}
                 <div className="form-group">
                   <label className="form-label" htmlFor="prod-unit">Unidade</label>
                   <select id="prod-unit" className="form-select" value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}>
@@ -430,7 +450,7 @@ export default function EstoquePage() {
                   )}
                 </div>
               </div>
-              {form.sale_price > 0 && form.cost_price > 0 && (
+              {form.product_type !== 'service' && form.sale_price > 0 && form.cost_price > 0 && (
                 <div className="alert alert-info">💡 Margem: {((form.sale_price - form.cost_price) / form.sale_price * 100).toFixed(1)}% · Lucro por unidade: {(form.sale_price - form.cost_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
               )}
 
@@ -449,16 +469,16 @@ export default function EstoquePage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <span className={`badge ${v.stock_qty > 0 ? 'badge-success' : 'badge-danger'}`}>{v.stock_qty} un</span>
                             {v.sale_price && <span style={{ color: '#00D4AA', fontWeight: 700 }}>{v.sale_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>}
-                            <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--kdl-danger)' }} onClick={() => removeVariant(v)}>✕</button>
+                            <button type="button" className="btn btn-danger btn-sm" onClick={() => removeVariant(v)} title="Remover variação">✕</button>
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
-                  <form onSubmit={addVariant} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'flex-end' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'flex-end' }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label" style={{ fontSize: '0.72rem' }}>Nome da variação *</label>
-                      <input type="text" className="form-input" value={variantForm.name} onChange={e => setVariantForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: P / Azul" required />
+                      <input type="text" className="form-input" value={variantForm.name} onChange={e => setVariantForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: P / Azul" />
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label" style={{ fontSize: '0.72rem' }}>Estoque</label>
@@ -472,8 +492,8 @@ export default function EstoquePage() {
                       <label className="form-label" style={{ fontSize: '0.72rem' }}>SKU</label>
                       <input type="text" className="form-input" value={variantForm.sku} onChange={e => setVariantForm(f => ({ ...f, sku: e.target.value }))} />
                     </div>
-                    <button type="submit" className="btn btn-primary btn-sm" disabled={savingVariant} style={{ alignSelf: 'flex-end' }}>{savingVariant ? '...' : '+ Add'}</button>
-                  </form>
+                    <button type="button" className="btn btn-primary btn-sm" disabled={savingVariant} style={{ alignSelf: 'flex-end' }} onClick={addVariant}>{savingVariant ? '...' : '+ Add'}</button>
+                  </div>
                   {!variants.length && <p style={{ fontSize: '0.75rem', color: 'var(--kdl-text-dim)', marginTop: 6 }}>Salve o produto primeiro, depois adicione variações. No PDV um seletor aparecerá automaticamente.</p>}
                 </div>
               )}
@@ -489,17 +509,21 @@ export default function EstoquePage() {
         </div>
       )}
 
-      {/* Adjustment/Loss modal */}
+      {/* Movement modal (Entry / Adjustment / Loss) */}
       {showMovModal && (
         <div className="modal-overlay" onClick={() => setShowMovModal(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '0.5rem' }}>Ajuste ou Perda</h2>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '0.5rem' }}>Movimentação de Estoque</h2>
             <p style={{ color: 'var(--kdl-text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>{showMovModal.name} · Atual: <strong style={{ color: 'var(--kdl-text)' }}>{showMovModal.stock_qty}</strong> {showMovModal.unit}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
-                <label className="form-label">O que aconteceu?</label>
+                <label className="form-label">Tipo de movimentação</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {([['adjustment', '🔄 Ajuste de Inventário'], ['loss', '📤 Produto Danificado/Perda']] as const).map(([v, l]) => (
+                  {([
+                    ['entry',      '📥 Entrada'],
+                    ['adjustment', '🔄 Ajuste'],
+                    ['loss',       '📤 Perda'],
+                  ] as const).map(([v, l]) => (
                     <label key={v} style={{ flex: 1, padding: '0.625rem', border: '1px solid', borderColor: movType === v ? 'var(--kdl-primary)' : 'var(--kdl-border)', borderRadius: 8, cursor: 'pointer', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600, background: movType === v ? 'rgba(108,71,255,0.1)' : 'transparent', color: movType === v ? 'var(--kdl-primary-light)' : 'var(--kdl-text-muted)' }}>
                       <input type="radio" name="movType" value={v} checked={movType === v} onChange={() => { setMovType(v as any); setMovQty(v === 'adjustment' ? showMovModal.stock_qty : 1); }} style={{ display: 'none' }} />{l}
                     </label>
@@ -507,8 +531,11 @@ export default function EstoquePage() {
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="mov-qty">{movType === 'adjustment' ? 'Quantidade final encontrada na prateleira' : 'Quantidade perdida'}</label>
+                <label className="form-label" htmlFor="mov-qty">
+                  {movType === 'entry' ? 'Quantidade a adicionar' : movType === 'adjustment' ? 'Quantidade final na prateleira' : 'Quantidade perdida'}
+                </label>
                 <input id="mov-qty" type="number" min={0} className="form-input" value={movQty} onChange={e => setMovQty(Number(e.target.value))} />
+                {movType === 'entry' && <p style={{ fontSize: '0.75rem', marginTop: 4, color: '#10B981' }}>Novo total: {showMovModal.stock_qty + movQty} {showMovModal.unit}</p>}
                 {movType === 'adjustment' && <p style={{ fontSize: '0.75rem', marginTop: 4, color: movQty !== showMovModal.stock_qty ? '#F59E0B' : 'var(--kdl-text-dim)' }}>Diferença: {movQty - showMovModal.stock_qty}</p>}
               </div>
               <div className="form-group">

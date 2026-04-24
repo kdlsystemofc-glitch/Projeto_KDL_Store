@@ -1,7 +1,7 @@
 # KDL Store — System Map
 
 > **Documento vivo.** Atualizado a cada mudança significativa no código.
-> Última atualização: 2026-04-23 | Fase 8 — Variações (grade), Pets + Agenda, Regras de Desconto, Fidelidade
+> Última atualização: 2026-04-23 | Fase 8 + Fixes: warranty_unit, product_type (Serviço), movimentação 3 tipos, upgrade modal inline
 
 ---
 
@@ -173,7 +173,7 @@ apps/store/
 - Ao finalizar:
   - RPC `get_next_sale_number` → `sale_number`
   - INSERT `sales` + `sale_items` (com `variant_id` se aplicável)
-  - Para variantes: RPC `decrement_variant_stock`; para produtos normais: `decrement_stock`
+  - Para variantes: RPC `decrement_variant_stock`; para produtos normais: `decrement_stock`; **serviços ignorados** (nenhuma chamada de estoque)
   - INSERT `cash_transactions` (tipo: `in`)
   - Se prazo + cliente: INSERT `accounts_receivable` (N parcelas)
   - Se `usePoints`: RPC `deduct_loyalty_points`
@@ -181,14 +181,17 @@ apps/store/
 
 #### 📦 Estoque (`/app/estoque`)
 - Tabela filtrável por nome/SKU/categoria
-- Cálculo de margem em tempo real (badge colorido)
-- Badge de estoque baixo (qty ≤ min_stock)
+- Cálculo de margem em tempo real (badge colorido); serviços mostram "—" no custo/margem
+- Badge de estoque baixo (qty ≤ min_stock); serviços exibem badge "Serviço" no lugar do estoque
+- **Tipo de item:** seletor "📦 Produto / 🔧 Serviço" no topo do formulário
+  - Serviços: oculta custo, estoque inicial, estoque mínimo; preço de venda ocupa coluna inteira
+  - Serviços não aparecem no botão de movimentação da tabela
 - Modal de cadastro/edição: nome, SKU, categoria, **fornecedor principal** (supplier_id), custo, preço, estoque, min_stock, unidade, warranty_months + warranty_unit (Dias/Meses/Anos)
-- Preview de margem no formulário
+- Preview de margem no formulário (somente para Produto)
 - **Grade de variações:** seção "🎨 Grade de Variações" no modal de edição (somente produtos já salvos)
   - Lista variantes existentes: nome, SKU, badge estoque, preço, botão remover
   - Formulário inline para adicionar variante: nome, estoque, preço, SKU + botão "Add"
-- Modal de movimentação: Entrada / Ajuste / Perda com motivo
+- **Modal de movimentação:** 3 tipos — 📥 Entrada (adiciona qty), 🔄 Ajuste (define total), 📤 Perda (subtrai qty); motivo obrigatório; hint "Novo total: X" para entrada; diff para ajuste
 
 #### 👥 Clientes (`/app/clientes`)
 - Busca por nome, telefone, CPF/CNPJ, email
@@ -245,7 +248,9 @@ apps/store/
   - Campos: nome, valor mínimo (R$) ou qtd mínima de itens, percentual de desconto
   - Toggle ativo/inativo
   - Preview ao vivo: "Pedidos acima de R$ X ganham Y% de desconto"
-- **Aba Assinatura:** plano + status + botão portal Stripe (via `/api/stripe/portal`, abre sessão autenticada) + botão upgrade + texto informativo sobre cancelamento/reativação via portal
+- **Aba Assinatura:** plano + status + botão portal Stripe (via `/api/stripe/portal`, abre sessão autenticada) + botão upgrade (abre modal inline) + texto informativo sobre cancelamento/reativação via portal
+  - **Modal de upgrade:** busca `plans` tabela, filtra planos com preço > atual, exibe cards com preço; botão "Assinar agora" → POST `/api/checkout` com `planId` + `userId` → redirect para Stripe Checkout
+  - Botão upgrade oculto automaticamente quando já no plano mais caro
 
 ### TenantContext (`app/app/context.tsx`)
 
@@ -262,7 +267,7 @@ O `layout.tsx` (Server Component) busca `tenantId`, `userId`, `storeName` uma ú
 
 - Server Component com `createAdminClient()` (service-role, bypassa RLS)
 - Busca tenant por `slug` + `status='active'`; retorna `notFound()` se inativo
-- Lista produtos ativos com `stock_qty > 0`
+- Lista produtos ativos com `stock_qty > 0` e `product_type != 'service'` (serviços excluídos)
 - `generateMetadata` para SEO
 - Requer `SUPABASE_SERVICE_ROLE_KEY` no Vercel
 
@@ -360,7 +365,10 @@ SUPABASE_SERVICE_ROLE_KEY
 | `customers` | `phone2` | `text` | Segundo telefone do cliente |
 | `customers` | `birthday` | `date` | Data de aniversário |
 | `users` | `email` | `text` | Email copiado do auth.users |
-| `products` | `warranty_months` | `integer default 0` | Meses de garantia padrão |
+| `products` | `warranty_months` | `integer default 0` | Duração de garantia padrão |
+| `products` | `warranty_unit` | `text default 'months'` | Unidade: `days`, `months`, `years` |
+| `products` | `product_type` | `text default 'product'` | Tipo: `product` ou `service` (serviços não consomem estoque) |
+| `warranties` | `warranty_unit` | `text default 'months'` | Unidade da garantia emitida |
 | `sales` | `sale_number` | `integer` | Número sequencial por tenant |
 | `warranties` | `warranty_code` | `text` | Código único legível (ex: `KDL-A1B2C3`) |
 | `service_orders` | `sale_id` | `uuid → sales` | Venda de origem da OS |
@@ -415,7 +423,7 @@ created_at timestamptz
 | `decrement_variant_stock(p_variant_id, p_qty)` | RPC | Decrementa estoque de variante |
 | `add_loyalty_points(p_customer_id, p_points)` | RPC | Incrementa `loyalty_points` do cliente |
 | `deduct_loyalty_points(p_customer_id, p_points)` | RPC | Deduz `loyalty_points` com piso em 0 |
-| `set_warranty_expiry()` | trigger before insert/update warranties | Calcula `expiry_date = issue_date + warranty_months` |
+| `set_warranty_expiry()` | trigger before insert/update warranties | Calcula `expiry_date = issue_date + warranty_months * unidade` (days/months/years) |
 
 ---
 
@@ -483,7 +491,7 @@ Finaliza:
   ├── RPC get_next_sale_number() → sale_number
   ├── INSERT sales (com auto-heal)
   ├── INSERT sale_items (com variant_id)
-  ├── RPC decrement_variant_stock() ou decrement_stock() por item
+  ├── RPC decrement_variant_stock() ou decrement_stock() por item (ignorado p/ product_type=service)
   ├── INSERT cash_transactions (in)
   ├── [prazo] INSERT accounts_receivable (N parcelas)
   └── [usePoints] RPC deduct_loyalty_points()
@@ -609,6 +617,7 @@ NEXT_PUBLIC_ADMIN_URL=https://admin.kdlstore.com.br
 | `docs/migration_v1.3.sql` | Fase 8 | `product_variants`, `pets`, `appointments`, `discount_rules`, `variant_id` em `sale_items`, RPCs `decrement_variant_stock` + `deduct_loyalty_points` |
 | `docs/migration_v1.4.sql` | Fix | `customers.phone2`, `customers.birthday` |
 | `docs/migration_v1.5.sql` | Fix | `products.warranty_unit`, `warranties.warranty_unit`, trigger `set_warranty_expiry` atualizado |
+| `docs/migration_v1.6.sql` | Fix | `products.product_type` (`product`/`service`) |
 
 **Para aplicar:** Supabase → SQL Editor → cole e execute cada migration em ordem.
 
@@ -630,4 +639,4 @@ NEXT_PUBLIC_ADMIN_URL=https://admin.kdlstore.com.br
 
 ---
 
-*Versão: 0.8.0 — Fases 1–8 completas*
+*Versão: 0.8.1 — Fases 1–8 + fixes: warranty_unit, product_type/service, movimentação 3 tipos, upgrade modal inline*

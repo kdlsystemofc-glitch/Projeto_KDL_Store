@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useTenant } from '../context';
 
-type Product  = { id: string; name: string; sku: string; sale_price: number; cost_price: number; stock_qty: number; warranty_months?: number; warranty_unit?: string };
+type Product  = { id: string; name: string; sku: string; sale_price: number; cost_price: number; stock_qty: number; warranty_months?: number; warranty_unit?: string; product_type?: string };
 type Variant  = { id: string; product_id: string; name: string; sku: string | null; stock_qty: number; sale_price: number | null; cost_price: number | null };
 type Customer = { id: string; name: string; phone: string; cpf_cnpj: string; loyalty_points?: number };
 type CartItem = { product: Product; qty: number; unit_price: number; discount: number; is_gift: boolean; variantId?: string | null; variantName?: string | null };
@@ -69,7 +69,7 @@ export default function PDVPage() {
     async function load() {
       const today = new Date().toISOString().split('T')[0];
       const [p, c, s, v, dr] = await Promise.all([
-        supabase.from('products').select('id,name,sku,sale_price,cost_price,stock_qty,warranty_months,warranty_unit').eq('tenant_id', tenantId).eq('is_active', true),
+        supabase.from('products').select('id,name,sku,sale_price,cost_price,stock_qty,warranty_months,warranty_unit,product_type').eq('tenant_id', tenantId).eq('is_active', true),
         supabase.from('customers').select('id,name,phone,cpf_cnpj,loyalty_points').eq('tenant_id', tenantId),
         supabase.from('sales')
           .select('id,sale_number,total,payment_method,created_at,status,customers(name)')
@@ -248,9 +248,9 @@ export default function PDVPage() {
       variant_id: i.variantId || null,
     })));
 
-    // Decrementa estoque (produto pai ou variante)
+    // Decrementa estoque (produto pai ou variante) — serviços não têm estoque
     for (const item of cart) {
-      if (!item.is_gift) {
+      if (!item.is_gift && item.product.product_type !== 'service') {
         if (item.variantId) {
           await supabase.rpc('decrement_variant_stock', { p_variant_id: item.variantId, p_qty: item.qty });
         } else {
@@ -325,8 +325,9 @@ export default function PDVPage() {
       }
     }
 
-    // Atualiza estoque local
+    // Atualiza estoque local — serviços ignorados
     setProducts(prev => prev.map(p => {
+      if (p.product_type === 'service') return p;
       const cartItem = cart.find(i => i.product.id === p.id && !i.is_gift);
       return cartItem ? { ...p, stock_qty: Math.max(0, p.stock_qty - cartItem.qty) } : p;
     }));

@@ -14,7 +14,7 @@ const ROLES: Record<string, string> = {
 
 export default function ConfiguracoesPage() {
   const supabase = createClient();
-  const { tenantId } = useTenant();
+  const { tenantId, userId } = useTenant();
 
   type DiscountRule = { id: string; name: string; min_qty: number | null; min_amount: number | null; discount_pct: number; is_active: boolean };
 
@@ -24,6 +24,9 @@ export default function ConfiguracoesPage() {
   const [planInfo, setPlanInfo] = useState<{ name: string; price: number; status: string } | null>(null);
   const [saving, setSaving]     = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState('');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [plans, setPlans]       = useState<{ name: string; display_name: string; price_monthly: number }[]>([]);
   const [storeForm, setStoreForm] = useState({ name: '', slug: '', whatsapp: '' });
   const [showUserModal, setShowUserModal] = useState(false);
   const [userForm, setUserForm] = useState({ name: '', email: '', role: 'seller', password: '' });
@@ -40,9 +43,9 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     if (!tenantId) return;
     async function load() {
-      const [tenantRes, usersRes, rulesRes] = await Promise.all([
+      const [tenantRes, usersRes, rulesRes, plansRes] = await Promise.all([
         supabase.from('tenants')
-          .select('name, slug, whatsapp, status, plans(name, price_monthly)')
+          .select('name, slug, whatsapp, status, plans(name, display_name, price_monthly)')
           .eq('id', tenantId)
           .single(),
         supabase.from('users')
@@ -53,6 +56,9 @@ export default function ConfiguracoesPage() {
           .select('*')
           .eq('tenant_id', tenantId)
           .order('min_amount', { ascending: true }),
+        supabase.from('plans')
+          .select('name, display_name, price_monthly')
+          .order('price_monthly'),
       ]);
 
       if (tenantRes.data) {
@@ -60,8 +66,9 @@ export default function ConfiguracoesPage() {
         const p = t.plans;
         setTenant({ name: t.name, slug: t.slug });
         setStoreForm({ name: t.name || '', slug: t.slug || '', whatsapp: t.whatsapp || '' });
-        setPlanInfo(p ? { name: p.name, price: p.price_monthly, status: t.status } : null);
+        setPlanInfo(p ? { name: p.display_name || p.name, price: p.price_monthly, status: t.status } : null);
       }
+      setPlans((plansRes.data || []) as any);
 
       if (usersRes.data) {
         setUsers(usersRes.data.map((u: any) => ({
@@ -460,14 +467,14 @@ export default function ConfiguracoesPage() {
                 {portalLoading ? 'Abrindo...' : '🔗 Gerenciar assinatura no Stripe'}
               </button>
 
-              <a
-                href={`${process.env.NEXT_PUBLIC_LANDING_URL || 'https://kdlstore.com.br'}#planos`}
-                target="_blank"
-                rel="noopener noreferrer"
-                id="upgrade-btn"
-                className="btn btn-primary"
-                style={{ justifyContent: 'center' }}
-              >⬆️ Fazer upgrade de plano</a>
+              {plans.filter(p => p.price_monthly > (planInfo?.price ?? 0)).length > 0 && (
+                <button
+                  id="upgrade-btn"
+                  className="btn btn-primary"
+                  style={{ justifyContent: 'center' }}
+                  onClick={() => setShowUpgradeModal(true)}
+                >⬆️ Fazer upgrade de plano</button>
+              )}
 
               <p style={{ fontSize: '0.8rem', color: 'var(--kdl-text-muted)', lineHeight: 1.5, borderTop: '1px solid var(--kdl-border)', paddingTop: '0.75rem' }}>
                 Pelo portal do Stripe você pode <strong>alterar o método de pagamento</strong>, visualizar faturas, <strong>cancelar</strong> ou <strong>reativar</strong> sua assinatura. Após o cancelamento, o acesso é mantido até o fim do período pago. Para reativar, basta acessar o portal antes do encerramento.
@@ -476,6 +483,52 @@ export default function ConfiguracoesPage() {
           ) : (
             <p style={{ color: 'var(--kdl-text-muted)' }}>Carregando dados da assinatura...</p>
           )}
+        </div>
+      )}
+      {/* Modal de upgrade de plano */}
+      {showUpgradeModal && (
+        <div className="modal-overlay" onClick={() => setShowUpgradeModal(false)}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', marginBottom: '0.5rem' }}>⬆️ Fazer Upgrade</h2>
+            <p style={{ color: 'var(--kdl-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              Plano atual: <strong style={{ color: 'var(--kdl-text)' }}>{planInfo?.name}</strong>
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+              {plans
+                .filter(p => p.price_monthly > (planInfo?.price ?? 0))
+                .map(p => (
+                  <div key={p.name} style={{ border: '1px solid var(--kdl-border)', borderRadius: 12, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--kdl-surface-2)' }}>
+                    <p style={{ fontWeight: 700, fontFamily: 'Outfit, sans-serif', fontSize: '1rem' }}>{p.display_name || p.name}</p>
+                    <p style={{ fontWeight: 800, fontSize: '1.5rem', fontFamily: 'Outfit, sans-serif', color: '#00D4AA' }}>
+                      {p.price_monthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}<span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--kdl-text-muted)' }}>/mês</span>
+                    </p>
+                    <button
+                      className="btn btn-primary"
+                      style={{ justifyContent: 'center', marginTop: 'auto' }}
+                      disabled={checkoutLoading === p.name}
+                      onClick={async () => {
+                        if (!userId) return;
+                        setCheckoutLoading(p.name);
+                        try {
+                          const res = await fetch('/api/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ planId: p.name, userId }),
+                          });
+                          const json = await res.json();
+                          if (json.url) window.location.href = json.url;
+                          else alert(json.error || 'Erro ao iniciar checkout');
+                        } catch { alert('Erro de comunicação'); }
+                        setCheckoutLoading('');
+                      }}
+                    >
+                      {checkoutLoading === p.name ? 'Aguarde...' : 'Assinar agora'}
+                    </button>
+                  </div>
+                ))}
+            </div>
+            <button className="btn btn-ghost btn-sm" style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }} onClick={() => setShowUpgradeModal(false)}>Fechar</button>
+          </div>
         </div>
       )}
     </div>
